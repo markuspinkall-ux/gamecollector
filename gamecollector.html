@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>GameCollector Ultimate</title>
+
+<!-- Dynamisches Manifest -->
+<script>
+const manifest = {
+  name: "GameCollector Ultimate",
+  short_name: "GameCollector",
+  start_url: ".",
+  display: "standalone",
+  background_color: "#1e2124",
+  theme_color: "#23272A",
+  icons: [{
+    src: "data:image/svg+xml;base64," + btoa(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+        <rect width="100" height="100" rx="20" fill="#23272A"/>
+        <path d="M30 55 h40 a10 10 0 0 1 10 10 v5 a8 8 0 0 1 -8 8 h-6 l-6 -8 h-20 l-6 8 h-6 a8 8 0 0 1 -8 -8 v-5 a10 10 0 0 1 10 -10z" fill="#5865F2"/>
+      </svg>
+    `),
+    sizes: "512x512",
+    type: "image/svg+xml"
+  }]
+};
+
+const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+const manifestURL = URL.createObjectURL(blob);
+const link = document.createElement('link');
+link.rel = 'manifest';
+link.href = manifestURL;
+document.head.appendChild(link);
+</script>
+
+<style>
+body{margin:0;font-family:Segoe UI,Arial;background:#1e2124;color:white}
+header{background:#23272A;padding:20px;display:flex;justify-content:space-between}
+input,select,button{padding:8px;border:none;border-radius:6px;background:#2C2F33;color:white}
+button{background:#5865F2;cursor:pointer}
+button:hover{background:#4752C4}
+.add-section{padding:20px;background:#2C2F33;display:flex;gap:10px;flex-wrap:wrap}
+.system-section{padding:20px}
+.system-title{font-size:18px;margin-bottom:10px}
+.carousel{display:flex;gap:15px;overflow-x:auto}
+.card{min-width:180px;background:#23272A;padding:10px;border-radius:10px}
+.card img{width:100%;height:260px;object-fit:cover;border-radius:6px}
+.card-buttons{display:flex;gap:5px;margin-top:5px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center}
+.modal-content{background:#23272A;padding:20px;border-radius:10px;width:300px;display:flex;flex-direction:column;gap:10px}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>🎮 GameCollector</h2>
+<input id="search" placeholder="Suchen..." oninput="render()">
+</header>
+
+<div class="add-section">
+<input id="title" placeholder="Titel">
+<select id="system">
+<option value="">System wählen</option>
+<option>NES</option><option>SNES</option><option>N64</option>
+<option>GameCube</option><option>Wii</option><option>Switch</option>
+<option>Game Boy</option><option>Nintendo DS</option>
+<option>PS1</option><option>PS2</option><option>PS3</option>
+<option>PS4</option><option>PS5</option>
+<option>Xbox</option><option>Xbox 360</option>
+<option>Xbox One</option>
+<option>PC</option>
+</select>
+<input type="file" id="coverUpload" accept="image/*">
+<button onclick="addGame()">Hinzufügen</button>
+</div>
+
+<div id="library"></div>
+
+<div class="modal" id="editModal">
+<div class="modal-content">
+<h3>Bearbeiten</h3>
+<input id="editTitle">
+<select id="editSystem">
+<option>NES</option><option>SNES</option><option>N64</option>
+<option>GameCube</option><option>Wii</option><option>Switch</option>
+<option>Game Boy</option><option>Nintendo DS</option>
+<option>PS1</option><option>PS2</option><option>PS3</option>
+<option>PS4</option><option>PS5</option>
+<option>Xbox</option><option>Xbox 360</option>
+<option>Xbox One</option>
+<option>PC</option>
+</select>
+<input type="file" id="editCover">
+<button onclick="saveEdit()">Speichern</button>
+<button onclick="closeModal()">Abbrechen</button>
+</div>
+</div>
+
+<script>
+let games=JSON.parse(localStorage.getItem("games"))||[];
+let editId=null;
+
+function save(){localStorage.setItem("games",JSON.stringify(games));}
+
+function addGame(){
+let t=title.value,s=system.value,f=coverUpload.files[0];
+if(!t||!s)return alert("Titel & System nötig");
+if(f){
+let r=new FileReader();
+r.onload=e=>createGame(t,s,e.target.result);
+r.readAsDataURL(f);
+}else createGame(t,s,"");
+}
+
+function createGame(t,s,c){
+games.push({id:Date.now(),title:t,system:s,cover:c});
+save();render();
+}
+
+function deleteGame(id){
+games=games.filter(g=>g.id!==id);
+save();render();
+}
+
+function openEdit(id){
+let g=games.find(x=>x.id===id);
+editId=id;
+editTitle.value=g.title;
+editSystem.value=g.system;
+editModal.style.display="flex";
+}
+
+function saveEdit(){
+let g=games.find(x=>x.id===editId);
+g.title=editTitle.value;
+g.system=editSystem.value;
+let f=editCover.files[0];
+if(f){
+let r=new FileReader();
+r.onload=e=>{g.cover=e.target.result;save();render();}
+r.readAsDataURL(f);
+}else{save();render();}
+closeModal();
+}
+
+function closeModal(){editModal.style.display="none";}
+
+function render(){
+let lib=document.getElementById("library");
+lib.innerHTML="";
+let searchVal=search.value.toLowerCase();
+let filtered=games.filter(g=>g.title.toLowerCase().includes(searchVal));
+let systems=[...new Set(filtered.map(g=>g.system))];
+systems.sort((a,b)=>a.localeCompare(b,'de',{sensitivity:'base'}));
+
+systems.forEach(sys=>{
+let sec=document.createElement("div");
+sec.className="system-section";
+sec.innerHTML=`<div class="system-title">${sys}</div>
+<div class="carousel" id="c-${sys}"></div>`;
+lib.appendChild(sec);
+let car=document.getElementById(`c-${sys}`);
+filtered.filter(g=>g.system===sys)
+.sort((a,b)=>a.title.localeCompare(b.title,'de',{sensitivity:'base'}))
+.forEach(g=>{
+car.innerHTML+=`
+<div class="card">
+${g.cover?`<img src="${g.cover}">`:``}
+<h4>${g.title}</h4>
+<div class="card-buttons">
+<button onclick="openEdit(${g.id})">Bearbeiten</button>
+<button onclick="deleteGame(${g.id})">Löschen</button>
+</div>
+</div>`;
+});
+});
+}
+
+render();
+
+/* Service Worker */
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register(
+URL.createObjectURL(new Blob([`
+self.addEventListener('install',e=>self.skipWaiting());
+self.addEventListener('fetch',e=>{});
+`],{type:'text/javascript'}))
+);
+}
+</script>
+
+</body>
+</html>
+
