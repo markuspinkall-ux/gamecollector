@@ -162,6 +162,7 @@ margin-bottom:10px;
 .list-view .card img{
 width:70px;
 height:100%;
+object-fit:cover;
 }
 
 .list-view .card-title{
@@ -233,10 +234,11 @@ justify-content:center;
 <div id="library"></div>
 
 <script>
+
 const API_KEY="fd6918aa2d024a1fa2331ccbde183ae7";
 
 let games=JSON.parse(localStorage.getItem("games"))||[];
-let selectedCover="";
+let selectedCoverUrl="";
 let currentView=localStorage.getItem("viewMode")||"grid";
 
 /* VIEW */
@@ -283,19 +285,10 @@ ${game.background_image?`<img src="${game.background_image}">`:''}
 <span>${game.name}</span>
 `;
 
-div.onclick=async()=>{
+div.onclick=()=>{
 title.value=game.name;
 box.style.display="none";
-
-if(game.background_image){
-let imgRes=await fetch(game.background_image);
-let blob=await imgRes.blob();
-let reader=new FileReader();
-reader.onloadend=function(){
-selectedCover=reader.result;
-};
-reader.readAsDataURL(blob);
-}
+selectedCoverUrl=game.background_image||"";
 };
 
 box.appendChild(div);
@@ -305,8 +298,9 @@ box.style.display="none";
 }
 }
 
-/* ADD */
-function addGame(){
+/* ADD GAME */
+async function addGame(){
+
 let t=title.value;
 let s=system.value;
 let file=coverUpload.files[0];
@@ -324,15 +318,42 @@ save();
 render();
 };
 reader.readAsDataURL(file);
+
+title.value="";
+coverUpload.value="";
+selectedCoverUrl="";
+return;
+}
+
+/* RAWG Cover */
+if(selectedCoverUrl){
+try{
+let imgRes=await fetch(selectedCoverUrl);
+let blob=await imgRes.blob();
+let reader=new FileReader();
+
+reader.onloadend=function(){
+games.push({id:Date.now(),title:t,system:s,cover:reader.result});
+save();
+render();
+};
+
+reader.readAsDataURL(blob);
+
+}catch(e){
+games.push({id:Date.now(),title:t,system:s,cover:""});
+save();
+render();
+}
 }else{
-games.push({id:Date.now(),title:t,system:s,cover:selectedCover});
+games.push({id:Date.now(),title:t,system:s,cover:""});
 save();
 render();
 }
 
 title.value="";
 coverUpload.value="";
-selectedCover="";
+selectedCoverUrl="";
 }
 
 /* SAVE */
@@ -390,6 +411,7 @@ ${g.cover?`<img src="${g.cover}">`:''}
 }
 
 render();
+
 </script>
 
 </body>
