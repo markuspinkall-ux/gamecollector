@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GameCollector Retro</title>
+<title>GameCollector Space Edition</title>
 
 <style>
 body{
@@ -14,7 +14,7 @@ color:white;
 overflow-x:hidden;
 }
 
-/* Retro Canvas */
+/* Canvas Hintergrund */
 canvas{
 position:fixed;
 top:0;
@@ -212,7 +212,6 @@ color:white;
 .edit-btn{ background:#00ffff; color:black; }
 .delete-btn{ background:#ff0066; }
 
-/* Desktop Tweaks */
 @media(min-width:768px){
 header input{ width:300px; }
 .card{ min-width:200px; }
@@ -227,7 +226,7 @@ header input{ width:300px; }
 
 <header>
 <div>
-<h2>🎮 GameCollector Retro</h2>
+<h2>🎮 GameCollector Space Edition</h2>
 <input id="search" placeholder="Suchen..." oninput="render()">
 </div>
 
@@ -252,7 +251,6 @@ header input{ width:300px; }
 <option>PC</option>
 </select>
 
-<input type="file" id="coverUpload" accept="image/*">
 <button onclick="addGame()">Hinzufügen</button>
 </div>
 
@@ -281,7 +279,8 @@ if(currentView==="list") document.getElementById("listBtn").classList.add("activ
 
 updateViewButtons();
 
-/* ===== RETRO BACKGROUND ===== */
+/* ===== SPACE INVADERS WALLPAPER ===== */
+
 const canvas = document.getElementById("bg");
 const ctx = canvas.getContext("2d");
 
@@ -293,54 +292,162 @@ resize();
 window.addEventListener("resize", resize);
 window.addEventListener("orientationchange", resize);
 
-let offset = 0;
+let stars=[];
+for(let i=0;i<100;i++){
+stars.push({
+x:Math.random()*canvas.width,
+y:Math.random()*canvas.height,
+speed:Math.random()*0.5+0.2,
+size:Math.random()*2
+});
+}
 
-function drawRetro(){
-const w = canvas.width;
-const h = canvas.height;
+const invaderPattern=[
+"00111100",
+"01111110",
+"11111111",
+"11011011",
+"11111111",
+"00100100",
+"01000010",
+"10000001"
+];
+
+let invaders=[];
+let rows=4;
+let cols=8;
+let spacing=70;
+let invaderOffset=0;
+let direction=1;
+let drop=0;
+
+function createInvaders(){
+invaders=[];
+for(let r=0;r<rows;r++){
+for(let c=0;c<cols;c++){
+invaders.push({x:c*spacing,y:r*spacing,alive:true});
+}
+}
+}
+createInvaders();
+
+let bullets=[];
+setInterval(()=>{
+bullets.push({x:canvas.width/2,y:canvas.height-60});
+},1200);
+
+let ufoX=-200;
+let explosions=[];
+
+function drawInvader(x,y){
+const pixel=4;
+ctx.fillStyle="#00ffff";
+ctx.shadowColor="#00ffff";
+ctx.shadowBlur=15;
+for(let row=0;row<invaderPattern.length;row++){
+for(let col=0;col<8;col++){
+if(invaderPattern[row][col]==="1"){
+ctx.fillRect(x+col*pixel,y+row*pixel,pixel,pixel);
+}
+}
+}
+ctx.shadowBlur=0;
+}
+
+function drawPlayer(){
+ctx.fillStyle="#ff00aa";
+ctx.shadowColor="#ff00aa";
+ctx.shadowBlur=20;
+ctx.fillRect(canvas.width/2-20,canvas.height-50,40,15);
+ctx.shadowBlur=0;
+}
+
+function drawBackground(){
+const w=canvas.width;
+const h=canvas.height;
 
 ctx.clearRect(0,0,w,h);
 
-let gradient = ctx.createLinearGradient(0,0,0,h);
+let gradient=ctx.createLinearGradient(0,0,0,h);
 gradient.addColorStop(0,"#1a0033");
 gradient.addColorStop(1,"#000");
 ctx.fillStyle=gradient;
 ctx.fillRect(0,0,w,h);
 
-let sunY = h * 0.35;
+stars.forEach(s=>{
+ctx.fillStyle="white";
+ctx.fillRect(s.x,s.y,s.size,s.size);
+s.y+=s.speed;
+if(s.y>h){s.y=0;s.x=Math.random()*w;}
+});
+
+ctx.fillStyle="#ffcc00";
+ctx.shadowColor="#ffcc00";
+ctx.shadowBlur=20;
+ctx.fillRect(ufoX,60,60,20);
+ctx.shadowBlur=0;
+ufoX+=2;
+if(ufoX>w+100) ufoX=-200;
+
+invaderOffset+=direction*1.2;
+if(invaderOffset>80||invaderOffset<-80){
+direction*=-1;
+drop+=15;
+}
+
+invaders.forEach(inv=>{
+if(inv.alive){
+drawInvader(
+w/2-(cols*spacing)/2+inv.x+invaderOffset,
+120+inv.y+drop
+);
+}
+});
+
+bullets.forEach(b=>{
 ctx.fillStyle="#ff0066";
+ctx.fillRect(b.x,b.y,4,10);
+b.y-=6;
+
+invaders.forEach(inv=>{
+if(inv.alive){
+let ix=w/2-(cols*spacing)/2+inv.x+invaderOffset;
+let iy=120+inv.y+drop;
+if(b.x>ix&&b.x<ix+32&&b.y>iy&&b.y<iy+32){
+inv.alive=false;
+explosions.push({x:ix,y:iy,life:20});
+}
+}
+});
+});
+bullets=bullets.filter(b=>b.y>0);
+
+explosions.forEach(e=>{
+ctx.fillStyle="#ff0066";
+ctx.shadowColor="#ff0066";
+ctx.shadowBlur=20;
 ctx.beginPath();
-ctx.arc(w/2, sunY, 100, 0, Math.PI*2);
+ctx.arc(e.x+16,e.y+16,20-e.life,0,Math.PI*2);
 ctx.fill();
+ctx.shadowBlur=0;
+e.life--;
+});
+explosions=explosions.filter(e=>e.life>0);
 
-ctx.strokeStyle="#00ffff";
-for(let i=0;i<25;i++){
-let y = h*0.55 + i*20 + offset;
-ctx.beginPath();
-ctx.moveTo(0,y);
-ctx.lineTo(w,y);
-ctx.stroke();
+drawPlayer();
+requestAnimationFrame(drawBackground);
 }
-
-offset+=0.5;
-if(offset>20) offset=0;
-
-requestAnimationFrame(drawRetro);
-}
-drawRetro();
+drawBackground();
 
 /* ===== GAME LOGIC ===== */
+
 let games=JSON.parse(localStorage.getItem("games"))||[];
-let selectedCover="";
-let autoTimeout;
 
 function save(){
 localStorage.setItem("games",JSON.stringify(games));
 }
 
 async function autoComplete(){
-clearTimeout(autoTimeout);
-autoTimeout=setTimeout(async()=>{
 let query=document.getElementById("title").value;
 if(query.length<2){
 autocompleteResults.style.display="none";
@@ -359,43 +466,29 @@ box.style.display="block";
 data.results.forEach(game=>{
 let div=document.createElement("div");
 div.className="autocomplete-item";
-div.innerHTML=`
-${game.background_image?`<img src="${game.background_image}">`:''}
-<span>${game.name}</span>
-`;
+div.innerHTML=`<span>${game.name}</span>`;
 div.onclick=()=>{
 title.value=game.name;
-selectedCover=game.background_image||"";
 box.style.display="none";
 };
 box.appendChild(div);
 });
-},300);
 }
 
 function addGame(){
 let t=title.value;
 let s=system.value;
 if(!t||!s)return alert("Titel & System nötig");
-createGame(t,s,selectedCover);
-title.value="";
-autocompleteResults.style.display="none";
-}
-
-function createGame(t,s,c){
-games.push({id:Date.now(),title:t,system:s,cover:c});
+games.push({id:Date.now(),title:t,system:s});
 save();
 render();
+title.value="";
 }
 
 function editGame(id){
 let g=games.find(x=>x.id===id);
 let newTitle=prompt("Neuer Titel:",g.title);
-if(newTitle){
-g.title=newTitle;
-save();
-render();
-}
+if(newTitle){g.title=newTitle;save();render();}
 }
 
 function deleteGame(id){
@@ -409,7 +502,7 @@ render();
 function render(){
 let lib=document.getElementById("library");
 lib.innerHTML="";
-lib.className = currentView==="list" ? "list-view" : "";
+lib.className=currentView==="list"?"list-view":"";
 
 let searchVal=search.value.toLowerCase();
 let filtered=games.filter(g=>g.title.toLowerCase().includes(searchVal));
@@ -429,7 +522,6 @@ filtered.filter(g=>g.system===sys)
 .forEach(g=>{
 car.innerHTML+=`
 <div class="card">
-${g.cover?`<img src="${g.cover}">`:''}
 <div class="card-icons">
 <button class="icon-btn edit-btn" onclick="editGame(${g.id})">✏</button>
 <button class="icon-btn delete-btn" onclick="deleteGame(${g.id})">🗑</button>
