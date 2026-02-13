@@ -3,19 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GameCollector</title>
+<title>GameCollector Retro Edition</title>
 
 <style>
 body{
 margin:0;
 font-family:Segoe UI,Arial;
-background:#1e1f22;
 color:white;
+overflow-x:hidden;
+
+/* RETRO SYNTHWAVE BACKGROUND */
+background:
+linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.2)),
+linear-gradient(to bottom, #ff00aa 0%, #2a004d 50%, #000 100%),
+repeating-linear-gradient(
+0deg,
+rgba(0,255,255,0.08) 0px,
+rgba(0,255,255,0.08) 1px,
+transparent 1px,
+transparent 40px
+),
+repeating-linear-gradient(
+90deg,
+rgba(0,255,255,0.08) 0px,
+rgba(0,255,255,0.08) 1px,
+transparent 1px,
+transparent 40px
+);
+
+background-blend-mode:overlay;
 }
 
 /* HEADER */
 header{
-background:#2b2d31;
+background:rgba(20,20,30,0.9);
 padding:15px;
 display:flex;
 justify-content:space-between;
@@ -44,12 +65,12 @@ font-weight:bold;
 }
 
 .view-switch button.active{
-background:#5865f2;
+background:#ff00aa;
 }
 
 /* CONTROLS */
 .controls{
-background:#2b2d31;
+background:rgba(20,20,30,0.9);
 padding:15px;
 display:flex;
 flex-wrap:wrap;
@@ -71,7 +92,7 @@ padding:8px 10px;
 border:none;
 border-radius:6px;
 cursor:pointer;
-background:#5865f2;
+background:#ff00aa;
 color:white;
 }
 
@@ -117,7 +138,8 @@ padding:20px;
 .system-title{
 font-size:20px;
 margin-bottom:15px;
-color:#5865f2;
+color:#00ffff;
+text-shadow:0 0 10px #00ffff;
 }
 
 /* GRID */
@@ -201,7 +223,7 @@ justify-content:center;
 
 <header>
 <div>
-<h2>🎮 GameCollector</h2>
+<h2>🎮 GameCollector Retro</h2>
 <input id="search" placeholder="Suchen..." oninput="render()">
 </div>
 
