@@ -10,16 +10,25 @@ body{
 margin:0;
 font-family:Segoe UI,Arial;
 color:white;
-background:#000;
+background:transparent;
 overflow-x:hidden;
 }
 
-/* Canvas Hintergrund */
+/* Canvas Hintergrund – MOBILE FIX */
 canvas{
 position:fixed;
 top:0;
 left:0;
-z-index:-1;
+width:100%;
+height:100%;
+z-index:0;
+pointer-events:none;
+}
+
+/* Content Layer */
+header, .add-section, #library{
+position:relative;
+z-index:2;
 }
 
 /* Header */
@@ -239,9 +248,7 @@ height:280px;
 
 const API_KEY = "fd6918aa2d024a1fa2331ccbde183ae7";
 
-/* ===================== */
-/* RETRO SYNTHWAVE WALLPAPER */
-/* ===================== */
+/* ===== RETRO WALLPAPER (MOBILE FIX) ===== */
 
 const canvas = document.getElementById("bg");
 const ctx = canvas.getContext("2d");
@@ -252,6 +259,7 @@ canvas.height = window.innerHeight;
 }
 resize();
 window.addEventListener("resize", resize);
+window.addEventListener("orientationchange", resize);
 
 let offset = 0;
 
@@ -314,15 +322,6 @@ ctx.lineTo(w/2 + i*100, h);
 ctx.stroke();
 }
 
-/* Scanlines */
-ctx.strokeStyle = "rgba(255,255,255,0.03)";
-for(let i=0;i<h;i+=4){
-ctx.beginPath();
-ctx.moveTo(0,i);
-ctx.lineTo(w,i);
-ctx.stroke();
-}
-
 offset += 0.5;
 if(offset > 20) offset = 0;
 
@@ -331,9 +330,7 @@ requestAnimationFrame(drawRetro);
 
 drawRetro();
 
-/* ===================== */
-/* GAME LOGIK */
-/* ===================== */
+/* ===== GAME LOGIK ===== */
 
 let games=JSON.parse(localStorage.getItem("games"))||[];
 let selectedCover="";
