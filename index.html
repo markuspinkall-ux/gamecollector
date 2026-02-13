@@ -13,7 +13,7 @@ background:#0f1115;
 color:white;
 }
 
-/* Canvas Background */
+/* Canvas Hintergrund */
 canvas{
 position:fixed;
 top:0;
@@ -37,6 +37,11 @@ margin:0;
 
 header input{
 width:100%;
+padding:8px;
+border:none;
+border-radius:6px;
+background:#2C2F33;
+color:white;
 }
 
 /* Add Section */
@@ -47,15 +52,26 @@ display:flex;
 flex-direction:column;
 gap:10px;
 position:relative;
+min-height:160px;
 }
 
 .add-section input,
 .add-section select,
 .add-section button{
 width:100%;
+padding:8px;
+border:none;
+border-radius:6px;
+background:#2C2F33;
+color:white;
 }
 
-/* Autocomplete FIX */
+.add-section button{
+background:#5865F2;
+cursor:pointer;
+}
+
+/* Autocomplete */
 .autocomplete-box{
 position:absolute;
 top:60px;
@@ -88,6 +104,11 @@ object-fit:cover;
 border-radius:4px;
 }
 
+/* Library Abstand FIX */
+#library{
+margin-top:140px;
+}
+
 /* System */
 .system-section{
 padding:20px;
@@ -104,15 +125,6 @@ gap:15px;
 overflow-x:auto;
 scroll-snap-type:x mandatory;
 padding-bottom:10px;
-}
-
-.carousel::-webkit-scrollbar{
-height:6px;
-}
-
-.carousel::-webkit-scrollbar-thumb{
-background:#444;
-border-radius:4px;
 }
 
 /* Card */
@@ -156,6 +168,11 @@ margin-top:5px;
 flex:1;
 font-size:12px;
 padding:5px;
+border:none;
+border-radius:4px;
+background:#5865F2;
+color:white;
+cursor:pointer;
 }
 
 /* Desktop Layout */
@@ -229,10 +246,10 @@ height:280px;
 
 <script>
 
-/* API KEY FEST EINGEBAUT */
+/* FESTER API KEY */
 const API_KEY = "fd6918aa2d024a1fa2331ccbde183ae7";
 
-/* Hintergrund */
+/* Hintergrund Animation */
 const canvas=document.getElementById("bg");
 const ctx=canvas.getContext("2d");
 canvas.width=window.innerWidth;
@@ -250,4 +267,129 @@ dy:(Math.random()-0.5)*0.4
 }
 
 function animate(){
-ctx.clearRect(0,0,
+ctx.clearRect(0,0,canvas.width,canvas.height);
+ctx.fillStyle="rgba(88,101,242,0.3)";
+particles.forEach(p=>{
+ctx.beginPath();
+ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+ctx.fill();
+p.x+=p.dx;
+p.y+=p.dy;
+if(p.x<0||p.x>canvas.width)p.dx*=-1;
+if(p.y<0||p.y>canvas.height)p.dy*=-1;
+});
+requestAnimationFrame(animate);
+}
+animate();
+
+/* Game Logic */
+let games=JSON.parse(localStorage.getItem("games"))||[];
+let selectedCover="";
+let autoTimeout;
+
+function save(){
+localStorage.setItem("games",JSON.stringify(games));
+}
+
+async function autoComplete(){
+clearTimeout(autoTimeout);
+autoTimeout=setTimeout(async()=>{
+let query=title.value;
+if(query.length<2){
+autocompleteResults.style.display="none";
+return;
+}
+
+let res=await fetch(
+`https://api.rawg.io/api/games?key=${API_KEY}&search=${encodeURIComponent(query)}&page_size=5`
+);
+let data=await res.json();
+
+let box=autocompleteResults;
+box.innerHTML="";
+box.style.display="block";
+
+data.results.forEach(game=>{
+let div=document.createElement("div");
+div.className="autocomplete-item";
+div.innerHTML=`
+${game.background_image?`<img src="${game.background_image}">`:''}
+<span>${game.name}</span>
+`;
+div.onclick=()=>{
+title.value=game.name;
+selectedCover=game.background_image||"";
+box.style.display="none";
+};
+box.appendChild(div);
+});
+},300);
+}
+
+function addGame(){
+let t=title.value;
+let s=system.value;
+let f=coverUpload.files[0];
+if(!t||!s)return alert("Titel & System nötig");
+
+if(f){
+let r=new FileReader();
+r.onload=e=>createGame(t,s,e.target.result);
+r.readAsDataURL(f);
+}else createGame(t,s,selectedCover);
+
+selectedCover="";
+title.value="";
+}
+
+function createGame(t,s,c){
+games.push({id:Date.now(),title:t,system:s,cover:c});
+save();
+render();
+}
+
+function deleteGame(id){
+games=games.filter(g=>g.id!==id);
+save();
+render();
+}
+
+function render(){
+let lib=document.getElementById("library");
+lib.innerHTML="";
+let searchVal=search.value.toLowerCase();
+let filtered=games.filter(g=>g.title.toLowerCase().includes(searchVal));
+let systems=[...new Set(filtered.map(g=>g.system))];
+systems.sort((a,b)=>a.localeCompare(b,'de',{sensitivity:'base'}));
+
+systems.forEach(sys=>{
+let sec=document.createElement("div");
+sec.className="system-section";
+sec.innerHTML=`<div class="system-title">${sys}</div>
+<div class="carousel" id="c-${sys}"></div>`;
+lib.appendChild(sec);
+
+let car=document.getElementById(`c-${sys}`);
+filtered.filter(g=>g.system===sys)
+.sort((a,b)=>a.title.localeCompare(b.title,'de',{sensitivity:'base'}))
+.forEach(g=>{
+car.innerHTML+=`
+<div class="card">
+${g.cover?`<img src="${g.cover}">`:''}
+<div class="card-content">
+<h4>${g.title}</h4>
+<div class="card-buttons">
+<button onclick="deleteGame(${g.id})">Löschen</button>
+</div>
+</div>
+</div>`;
+});
+});
+}
+
+render();
+
+</script>
+
+</body>
+</html>
