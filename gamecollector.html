@@ -2,52 +2,170 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>GameCollector Ultimate</title>
-
-<!-- Dynamisches Manifest -->
-<script>
-const manifest = {
-  name: "GameCollector Ultimate",
-  short_name: "GameCollector",
-  start_url: ".",
-  display: "standalone",
-  background_color: "#1e2124",
-  theme_color: "#23272A",
-  icons: [{
-    src: "data:image/svg+xml;base64," + btoa(`
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-        <rect width="100" height="100" rx="20" fill="#23272A"/>
-        <path d="M30 55 h40 a10 10 0 0 1 10 10 v5 a8 8 0 0 1 -8 8 h-6 l-6 -8 h-20 l-6 8 h-6 a8 8 0 0 1 -8 -8 v-5 a10 10 0 0 1 10 -10z" fill="#5865F2"/>
-      </svg>
-    `),
-    sizes: "512x512",
-    type: "image/svg+xml"
-  }]
-};
-
-const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-const manifestURL = URL.createObjectURL(blob);
-const link = document.createElement('link');
-link.rel = 'manifest';
-link.href = manifestURL;
-document.head.appendChild(link);
-</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GameCollector Responsive</title>
 
 <style>
-body{margin:0;font-family:Segoe UI,Arial;background:#1e2124;color:white}
-header{background:#23272A;padding:20px;display:flex;justify-content:space-between}
-input,select,button{padding:8px;border:none;border-radius:6px;background:#2C2F33;color:white}
-button{background:#5865F2;cursor:pointer}
-button:hover{background:#4752C4}
-.add-section{padding:20px;background:#2C2F33;display:flex;gap:10px;flex-wrap:wrap}
-.system-section{padding:20px}
-.system-title{font-size:18px;margin-bottom:10px}
-.carousel{display:flex;gap:15px;overflow-x:auto}
-.card{min-width:180px;background:#23272A;padding:10px;border-radius:10px}
-.card img{width:100%;height:260px;object-fit:cover;border-radius:6px}
-.card-buttons{display:flex;gap:5px;margin-top:5px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center}
-.modal-content{background:#23272A;padding:20px;border-radius:10px;width:300px;display:flex;flex-direction:column;gap:10px}
+body{
+margin:0;
+font-family:Segoe UI,Arial;
+background:#1e2124;
+color:white;
+}
+
+/* HEADER */
+header{
+background:#23272A;
+padding:20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+flex-wrap:wrap;
+gap:10px;
+}
+
+header input{
+padding:8px;
+border:none;
+border-radius:6px;
+background:#2C2F33;
+color:white;
+}
+
+/* ADD SECTION */
+.add-section{
+padding:20px;
+background:#2C2F33;
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+position:relative;
+}
+
+input,select,button{
+padding:8px;
+border:none;
+border-radius:6px;
+background:#2C2F33;
+color:white;
+}
+
+button{
+background:#5865F2;
+cursor:pointer;
+}
+
+button:hover{
+background:#4752C4;
+}
+
+/* AUTOCOMPLETE */
+.autocomplete-box{
+position:absolute;
+top:60px;
+left:20px;
+width:250px;
+background:#23272A;
+border-radius:6px;
+max-height:250px;
+overflow-y:auto;
+display:none;
+z-index:999;
+border:1px solid #444;
+}
+
+.autocomplete-item{
+display:flex;
+gap:8px;
+padding:8px;
+cursor:pointer;
+align-items:center;
+}
+
+.autocomplete-item:hover{
+background:#2C2F33;
+}
+
+.autocomplete-item img{
+width:40px;
+height:55px;
+object-fit:cover;
+border-radius:4px;
+}
+
+/* LIBRARY */
+.system-section{
+padding:20px;
+}
+
+.system-title{
+font-size:18px;
+margin-bottom:10px;
+}
+
+.carousel{
+display:flex;
+gap:15px;
+overflow-x:auto;
+}
+
+.card{
+min-width:180px;
+background:#23272A;
+padding:10px;
+border-radius:10px;
+display:flex;
+flex-direction:column;
+}
+
+.card img{
+width:100%;
+height:260px;
+object-fit:cover;
+border-radius:6px;
+}
+
+.card-buttons{
+display:flex;
+gap:5px;
+margin-top:5px;
+flex-wrap:wrap;
+}
+
+.card h4{
+margin:8px 0 5px 0;
+font-size:14px;
+}
+
+/* MODAL */
+.modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.7);
+display:none;
+justify-content:center;
+align-items:center;
+}
+
+.modal-content{
+background:#23272A;
+padding:20px;
+border-radius:10px;
+width:300px;
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+.carousel{
+flex-direction:column;
+}
+.card{
+width:100%;
+}
+}
 </style>
 </head>
 
@@ -55,11 +173,16 @@ button:hover{background:#4752C4}
 
 <header>
 <h2>🎮 GameCollector</h2>
-<input id="search" placeholder="Suchen..." oninput="render()">
+<input id="search" placeholder="Suchen...">
 </header>
 
 <div class="add-section">
-<input id="title" placeholder="Titel">
+
+<div style="position:relative;">
+<input id="title" placeholder="Titel" autocomplete="off">
+<div id="autocompleteResults" class="autocomplete-box"></div>
+</div>
+
 <select id="system">
 <option value="">System wählen</option>
 <option>NES</option><option>SNES</option><option>N64</option>
@@ -71,8 +194,10 @@ button:hover{background:#4752C4}
 <option>Xbox One</option>
 <option>PC</option>
 </select>
+
 <input type="file" id="coverUpload" accept="image/*">
-<button onclick="addGame()">Hinzufügen</button>
+<button id="addBtn">Hinzufügen</button>
+
 </div>
 
 <div id="library"></div>
@@ -92,37 +217,119 @@ button:hover{background:#4752C4}
 <option>PC</option>
 </select>
 <input type="file" id="editCover">
-<button onclick="saveEdit()">Speichern</button>
+<button id="saveEditBtn">Speichern</button>
 <button onclick="closeModal()">Abbrechen</button>
 </div>
 </div>
 
 <script>
+const API_KEY="fd6918aa2d024a1fa2331ccbde183ae7";
+
+const titleInput=document.getElementById("title");
+const systemSelect=document.getElementById("system");
+const coverUpload=document.getElementById("coverUpload");
+const searchInput=document.getElementById("search");
+const library=document.getElementById("library");
+const autocompleteBox=document.getElementById("autocompleteResults");
+const addBtn=document.getElementById("addBtn");
+
+const editModal=document.getElementById("editModal");
+const editTitle=document.getElementById("editTitle");
+const editSystem=document.getElementById("editSystem");
+const editCover=document.getElementById("editCover");
+const saveEditBtn=document.getElementById("saveEditBtn");
+
 let games=JSON.parse(localStorage.getItem("games"))||[];
 let editId=null;
+let selectedCoverUrl="";
 
-function save(){localStorage.setItem("games",JSON.stringify(games));}
+/* SAVE */
+function save(){
+localStorage.setItem("games",JSON.stringify(games));
+}
 
-function addGame(){
-let t=title.value,s=system.value,f=coverUpload.files[0];
-if(!t||!s)return alert("Titel & System nötig");
+/* AUTOCOMPLETE */
+titleInput.addEventListener("input",async()=>{
+let query=titleInput.value;
+if(query.length<2){
+autocompleteBox.style.display="none";
+return;
+}
+
+try{
+let res=await fetch(`https://api.rawg.io/api/games?key=${API_KEY}&search=${encodeURIComponent(query)}&page_size=5`);
+let data=await res.json();
+
+autocompleteBox.innerHTML="";
+autocompleteBox.style.display="block";
+
+data.results.forEach(game=>{
+let div=document.createElement("div");
+div.className="autocomplete-item";
+div.innerHTML=`
+${game.background_image?`<img src="${game.background_image}">`:''}
+<span>${game.name}</span>
+`;
+div.onclick=()=>{
+titleInput.value=game.name;
+selectedCoverUrl=game.background_image||"";
+autocompleteBox.style.display="none";
+};
+autocompleteBox.appendChild(div);
+});
+}catch(e){
+autocompleteBox.style.display="none";
+}
+});
+
+/* ADD */
+addBtn.addEventListener("click",async()=>{
+let t=titleInput.value;
+let s=systemSelect.value;
+let f=coverUpload.files[0];
+
+if(!t||!s){
+alert("Titel & System nötig");
+return;
+}
+
 if(f){
 let r=new FileReader();
-r.onload=e=>createGame(t,s,e.target.result);
+r.onload=e=>{
+games.push({id:Date.now(),title:t,system:s,cover:e.target.result});
+save();render();
+};
 r.readAsDataURL(f);
-}else createGame(t,s,"");
 }
-
-function createGame(t,s,c){
-games.push({id:Date.now(),title:t,system:s,cover:c});
+else if(selectedCoverUrl){
+try{
+let imgRes=await fetch(selectedCoverUrl);
+let blob=await imgRes.blob();
+let r=new FileReader();
+r.onloadend=function(){
+games.push({id:Date.now(),title:t,system:s,cover:r.result});
+save();render();
+};
+r.readAsDataURL(blob);
+}catch(e){
+games.push({id:Date.now(),title:t,system:s,cover:""});
+save();render();
+}
+}
+else{
+games.push({id:Date.now(),title:t,system:s,cover:""});
 save();render();
 }
 
-function deleteGame(id){
-games=games.filter(g=>g.id!==id);
-save();render();
-}
+titleInput.value="";
+coverUpload.value="";
+selectedCoverUrl="";
+});
 
+/* SEARCH */
+searchInput.addEventListener("input",render);
+
+/* EDIT */
 function openEdit(id){
 let g=games.find(x=>x.id===id);
 editId=id;
@@ -131,42 +338,58 @@ editSystem.value=g.system;
 editModal.style.display="flex";
 }
 
-function saveEdit(){
+saveEditBtn.addEventListener("click",()=>{
 let g=games.find(x=>x.id===editId);
 g.title=editTitle.value;
 g.system=editSystem.value;
+
 let f=editCover.files[0];
 if(f){
 let r=new FileReader();
-r.onload=e=>{g.cover=e.target.result;save();render();}
+r.onload=e=>{
+g.cover=e.target.result;
+save();render();
+};
 r.readAsDataURL(f);
-}else{save();render();}
+}else{
+save();render();
+}
 closeModal();
+});
+
+function closeModal(){
+editModal.style.display="none";
 }
 
-function closeModal(){editModal.style.display="none";}
+/* DELETE */
+function deleteGame(id){
+games=games.filter(g=>g.id!==id);
+save();render();
+}
 
+/* RENDER */
 function render(){
-let lib=document.getElementById("library");
-lib.innerHTML="";
-let searchVal=search.value.toLowerCase();
+library.innerHTML="";
+let searchVal=searchInput.value.toLowerCase();
 let filtered=games.filter(g=>g.title.toLowerCase().includes(searchVal));
 let systems=[...new Set(filtered.map(g=>g.system))];
+
 systems.sort((a,b)=>a.localeCompare(b,'de',{sensitivity:'base'}));
 
 systems.forEach(sys=>{
 let sec=document.createElement("div");
 sec.className="system-section";
-sec.innerHTML=`<div class="system-title">${sys}</div>
-<div class="carousel" id="c-${sys}"></div>`;
-lib.appendChild(sec);
-let car=document.getElementById(`c-${sys}`);
+sec.innerHTML=`<div class="system-title">${sys}</div><div class="carousel"></div>`;
+library.appendChild(sec);
+
+let car=sec.querySelector(".carousel");
+
 filtered.filter(g=>g.system===sys)
 .sort((a,b)=>a.title.localeCompare(b.title,'de',{sensitivity:'base'}))
 .forEach(g=>{
 car.innerHTML+=`
 <div class="card">
-${g.cover?`<img src="${g.cover}">`:``}
+${g.cover?`<img src="${g.cover}" onerror="this.remove()">`:''}
 <h4>${g.title}</h4>
 <div class="card-buttons">
 <button onclick="openEdit(${g.id})">Bearbeiten</button>
@@ -178,18 +401,7 @@ ${g.cover?`<img src="${g.cover}">`:``}
 }
 
 render();
-
-/* Service Worker */
-if('serviceWorker' in navigator){
-navigator.serviceWorker.register(
-URL.createObjectURL(new Blob([`
-self.addEventListener('install',e=>self.skipWaiting());
-self.addEventListener('fetch',e=>{});
-`],{type:'text/javascript'}))
-);
-}
 </script>
 
 </body>
 </html>
-
