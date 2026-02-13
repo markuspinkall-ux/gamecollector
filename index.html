@@ -14,6 +14,7 @@ color:white;
 overflow-x:hidden;
 }
 
+/* Background Canvas */
 canvas{
 position:fixed;
 top:0;
@@ -69,6 +70,7 @@ background:rgba(20,20,30,0.9);
 display:flex;
 flex-wrap:wrap;
 gap:10px;
+position:relative;
 }
 
 .add-section input,
@@ -84,6 +86,39 @@ color:white;
 .add-section button{
 background:#ff00aa;
 cursor:pointer;
+}
+
+/* AUTOCOMPLETE */
+.autocomplete-box{
+background:#23272A;
+border-radius:6px;
+max-height:250px;
+overflow-y:auto;
+box-shadow:0 10px 30px rgba(0,0,0,.6);
+width:100%;
+position:absolute;
+top:45px;
+left:0;
+z-index:999;
+}
+
+.autocomplete-item{
+display:flex;
+gap:8px;
+padding:8px;
+cursor:pointer;
+align-items:center;
+}
+
+.autocomplete-item:hover{
+background:#2C2F33;
+}
+
+.autocomplete-item img{
+width:40px;
+height:55px;
+object-fit:cover;
+border-radius:4px;
 }
 
 /* GRID */
@@ -196,7 +231,10 @@ text-shadow:0 0 10px #00ffff;
 </header>
 
 <div class="add-section">
+<div style="position:relative;width:250px;">
 <input id="title" placeholder="Titel" oninput="autoComplete()" autocomplete="off">
+<div id="autocompleteResults" class="autocomplete-box" style="display:none;"></div>
+</div>
 
 <select id="system">
 <option value="">System wählen</option>
@@ -219,7 +257,7 @@ text-shadow:0 0 10px #00ffff;
 
 const API_KEY="fd6918aa2d024a1fa2331ccbde183ae7";
 
-/* ===== VIEW MODE ===== */
+/* VIEW MODE */
 let currentView=localStorage.getItem("viewMode")||"grid";
 
 function setView(mode){
@@ -237,10 +275,9 @@ if(currentView==="list")listBtn.classList.add("active");
 }
 updateViewButtons();
 
-/* ===== SPACE BACKGROUND ===== */
+/* SPACE BACKGROUND */
 const canvas=document.getElementById("bg");
 const ctx=canvas.getContext("2d");
-
 function resize(){
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
@@ -248,19 +285,18 @@ canvas.height=window.innerHeight;
 resize();
 window.addEventListener("resize",resize);
 
-function drawBackground(){
+function draw(){
 ctx.clearRect(0,0,canvas.width,canvas.height);
 let gradient=ctx.createLinearGradient(0,0,0,canvas.height);
 gradient.addColorStop(0,"#1a0033");
 gradient.addColorStop(1,"#000");
 ctx.fillStyle=gradient;
 ctx.fillRect(0,0,canvas.width,canvas.height);
-requestAnimationFrame(drawBackground);
+requestAnimationFrame(draw);
 }
-drawBackground();
+draw();
 
-/* ===== GAME LOGIC ===== */
-
+/* GAME LOGIC */
 let games=JSON.parse(localStorage.getItem("games"))||[];
 let selectedCover="";
 
@@ -268,22 +304,36 @@ function save(){
 localStorage.setItem("games",JSON.stringify(games));
 }
 
-/* RAWG Cover → Base64 */
 async function autoComplete(){
-let query=title.value;
-if(query.length<2)return;
+let query=document.getElementById("title").value;
+let box=document.getElementById("autocompleteResults");
 
-let res=await fetch(
-`https://api.rawg.io/api/games?key=${API_KEY}&search=${encodeURIComponent(query)}&page_size=1`
-);
+if(query.length<2){
+box.style.display="none";
+return;
+}
+
+let res=await fetch(`https://api.rawg.io/api/games?key=${API_KEY}&search=${encodeURIComponent(query)}&page_size=5`);
 let data=await res.json();
 
-if(data.results.length>0){
-let imageUrl=data.results[0].background_image;
+box.innerHTML="";
+box.style.display="block";
 
-if(imageUrl){
+data.results.forEach(game=>{
+let div=document.createElement("div");
+div.className="autocomplete-item";
+div.innerHTML=`
+${game.background_image?`<img src="${game.background_image}">`:''}
+<span>${game.name}</span>
+`;
+
+div.onclick=async()=>{
+document.getElementById("title").value=game.name;
+box.style.display="none";
+
+if(game.background_image){
 try{
-let imgRes=await fetch(imageUrl);
+let imgRes=await fetch(game.background_image);
 let blob=await imgRes.blob();
 let reader=new FileReader();
 reader.onloadend=function(){
@@ -294,7 +344,10 @@ reader.readAsDataURL(blob);
 selectedCover="";
 }
 }
-}
+};
+
+box.appendChild(div);
+});
 }
 
 function addGame(){
@@ -319,18 +372,14 @@ render();
 }
 
 title.value="";
-selectedCover="";
 coverUpload.value="";
+selectedCover="";
 }
 
 function editGame(id){
 let g=games.find(x=>x.id===id);
 let newTitle=prompt("Neuer Titel:",g.title);
-if(newTitle){
-g.title=newTitle;
-save();
-render();
-}
+if(newTitle){g.title=newTitle;save();render();}
 }
 
 function deleteGame(id){
@@ -355,7 +404,6 @@ let sec=document.createElement("div");
 sec.className="system-section";
 sec.innerHTML=`<div class="system-title">${sys}</div><div class="carousel"></div>`;
 lib.appendChild(sec);
-
 let car=sec.querySelector(".carousel");
 
 filtered.filter(g=>g.system===sys)
