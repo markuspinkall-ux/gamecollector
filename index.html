@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GameCollector Ultimate</title>
+<title>GameCollector</title>
 
 <style>
 body{
@@ -13,30 +13,25 @@ background:#0f1115;
 color:white;
 }
 
-/* Canvas Hintergrund */
+/* Hintergrund */
 canvas{
 position:fixed;
 top:0;
 left:0;
 z-index:-1;
+pointer-events:none;
 }
 
 /* Header */
 header{
 background:#23272acc;
-backdrop-filter:blur(10px);
 padding:15px;
 display:flex;
 flex-direction:column;
 gap:10px;
 }
 
-header h2{
-margin:0;
-}
-
 header input{
-width:100%;
 padding:8px;
 border:none;
 border-radius:6px;
@@ -51,14 +46,11 @@ background:#23272acc;
 display:flex;
 flex-direction:column;
 gap:10px;
-position:relative;
-min-height:160px;
 }
 
 .add-section input,
 .add-section select,
 .add-section button{
-width:100%;
 padding:8px;
 border:none;
 border-radius:6px;
@@ -71,17 +63,12 @@ background:#5865F2;
 cursor:pointer;
 }
 
-/* Autocomplete */
+/* Autocomplete – jetzt im normalen Layout */
 .autocomplete-box{
-position:absolute;
-top:60px;
-left:0;
-right:0;
 background:#23272A;
 border-radius:6px;
 max-height:250px;
 overflow-y:auto;
-z-index:9999;
 box-shadow:0 10px 30px rgba(0,0,0,.6);
 }
 
@@ -104,11 +91,6 @@ object-fit:cover;
 border-radius:4px;
 }
 
-/* Library Abstand FIX */
-#library{
-margin-top:140px;
-}
-
 /* System */
 .system-section{
 padding:20px;
@@ -124,18 +106,16 @@ display:flex;
 gap:15px;
 overflow-x:auto;
 scroll-snap-type:x mandatory;
-padding-bottom:10px;
 }
 
 /* Card */
 .card{
-position:relative;
 min-width:160px;
 border-radius:12px;
 overflow:hidden;
 background:#23272A;
 scroll-snap-align:start;
-transition:transform .2s ease;
+position:relative;
 }
 
 .card img{
@@ -168,14 +148,14 @@ margin-top:5px;
 flex:1;
 font-size:12px;
 padding:5px;
+background:#5865F2;
 border:none;
 border-radius:4px;
-background:#5865F2;
 color:white;
 cursor:pointer;
 }
 
-/* Desktop Layout */
+/* Desktop */
 @media(min-width:768px){
 
 header{
@@ -190,7 +170,7 @@ width:300px;
 
 .add-section{
 flex-direction:row;
-align-items:center;
+align-items:flex-start;
 }
 
 .add-section input,
@@ -219,7 +199,7 @@ height:280px;
 <canvas id="bg"></canvas>
 
 <header>
-<h2>🎮 GameCollector Ultimate</h2>
+<h2>🎮 GameCollector</h2>
 <input id="search" placeholder="Suchen..." oninput="render()">
 </header>
 
@@ -246,10 +226,9 @@ height:280px;
 
 <script>
 
-/* FESTER API KEY */
 const API_KEY = "fd6918aa2d024a1fa2331ccbde183ae7";
 
-/* Hintergrund Animation */
+/* Hintergrund */
 const canvas=document.getElementById("bg");
 const ctx=canvas.getContext("2d");
 canvas.width=window.innerWidth;
@@ -282,7 +261,7 @@ requestAnimationFrame(animate);
 }
 animate();
 
-/* Game Logic */
+/* Logik */
 let games=JSON.parse(localStorage.getItem("games"))||[];
 let selectedCover="";
 let autoTimeout;
@@ -340,6 +319,7 @@ r.readAsDataURL(f);
 
 selectedCover="";
 title.value="";
+autocompleteResults.style.display="none";
 }
 
 function createGame(t,s,c){
@@ -366,10 +346,11 @@ systems.forEach(sys=>{
 let sec=document.createElement("div");
 sec.className="system-section";
 sec.innerHTML=`<div class="system-title">${sys}</div>
-<div class="carousel" id="c-${sys}"></div>`;
+<div class="carousel"></div>`;
 lib.appendChild(sec);
 
-let car=document.getElementById(`c-${sys}`);
+let car=sec.querySelector(".carousel");
+
 filtered.filter(g=>g.system===sys)
 .sort((a,b)=>a.title.localeCompare(b.title,'de',{sensitivity:'base'}))
 .forEach(g=>{
