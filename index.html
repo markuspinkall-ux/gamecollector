@@ -4,62 +4,163 @@
 <meta charset="UTF-8">
 <title>GameCollector Ultimate</title>
 
-<!-- Dynamisches Manifest -->
-<script>
-const manifest = {
-  name: "GameCollector Ultimate",
-  short_name: "GameCollector",
-  start_url: ".",
-  display: "standalone",
-  background_color: "#1e2124",
-  theme_color: "#23272A",
-  icons: [{
-    src: "data:image/svg+xml;base64," + btoa(`
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-        <rect width="100" height="100" rx="20" fill="#23272A"/>
-        <path d="M30 55 h40 a10 10 0 0 1 10 10 v5 a8 8 0 0 1 -8 8 h-6 l-6 -8 h-20 l-6 8 h-6 a8 8 0 0 1 -8 -8 v-5 a10 10 0 0 1 10 -10z" fill="#5865F2"/>
-      </svg>
-    `),
-    sizes: "512x512",
-    type: "image/svg+xml"
-  }]
-};
-
-const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-const manifestURL = URL.createObjectURL(blob);
-const link = document.createElement('link');
-link.rel = 'manifest';
-link.href = manifestURL;
-document.head.appendChild(link);
-</script>
-
 <style>
-body{margin:0;font-family:Segoe UI,Arial;background:#1e2124;color:white}
-header{background:#23272A;padding:20px;display:flex;justify-content:space-between}
-input,select,button{padding:8px;border:none;border-radius:6px;background:#2C2F33;color:white}
-button{background:#5865F2;cursor:pointer}
-button:hover{background:#4752C4}
-.add-section{padding:20px;background:#2C2F33;display:flex;gap:10px;flex-wrap:wrap}
-.system-section{padding:20px}
-.system-title{font-size:18px;margin-bottom:10px}
-.carousel{display:flex;gap:15px;overflow-x:auto}
-.card{min-width:180px;background:#23272A;padding:10px;border-radius:10px}
-.card img{width:100%;height:260px;object-fit:cover;border-radius:6px}
-.card-buttons{display:flex;gap:5px;margin-top:5px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;justify-content:center;align-items:center}
-.modal-content{background:#23272A;padding:20px;border-radius:10px;width:300px;display:flex;flex-direction:column;gap:10px}
+body{
+margin:0;
+font-family:Segoe UI,Arial;
+background:#0f1115;
+color:white;
+overflow-x:hidden;
+}
+
+/* Animierter Hintergrund */
+canvas{
+position:fixed;
+top:0;
+left:0;
+z-index:-1;
+}
+
+/* Header */
+header{
+background:#23272acc;
+backdrop-filter:blur(10px);
+padding:20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+input,select,button{
+padding:8px;
+border:none;
+border-radius:6px;
+background:#2C2F33;
+color:white;
+}
+
+button{
+background:#5865F2;
+cursor:pointer;
+transition:.2s;
+}
+
+button:hover{
+background:#4752C4;
+}
+
+.add-section{
+padding:20px;
+background:#23272acc;
+backdrop-filter:blur(10px);
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+position:relative;
+}
+
+.autocomplete-box{
+position:absolute;
+top:60px;
+background:#23272A;
+width:260px;
+border-radius:6px;
+max-height:300px;
+overflow-y:auto;
+z-index:1000;
+box-shadow:0 10px 30px rgba(0,0,0,.6);
+}
+
+.autocomplete-item{
+display:flex;
+gap:8px;
+padding:8px;
+cursor:pointer;
+align-items:center;
+}
+
+.autocomplete-item:hover{
+background:#2C2F33;
+}
+
+.autocomplete-item img{
+width:40px;
+height:55px;
+object-fit:cover;
+border-radius:4px;
+}
+
+.system-section{
+padding:30px;
+}
+
+.system-title{
+font-size:22px;
+margin-bottom:20px;
+}
+
+.carousel{
+display:flex;
+gap:20px;
+overflow-x:auto;
+scroll-snap-type:x mandatory;
+}
+
+/* Card + 3D */
+.card{
+position:relative;
+min-width:200px;
+border-radius:12px;
+overflow:hidden;
+background:#23272A;
+scroll-snap-align:start;
+transition:transform .2s ease;
+transform-style:preserve-3d;
+}
+
+.card img{
+width:100%;
+height:280px;
+object-fit:cover;
+}
+
+.card-content{
+position:absolute;
+bottom:0;
+width:100%;
+padding:12px;
+background:linear-gradient(to top,rgba(0,0,0,.8),transparent);
+opacity:0;
+transform:translateY(20px);
+transition:.3s;
+}
+
+.card:hover .card-content{
+opacity:1;
+transform:translateY(0);
+}
+
+.card-buttons{
+display:flex;
+gap:6px;
+margin-top:8px;
+}
 </style>
 </head>
 
 <body>
 
+<canvas id="bg"></canvas>
+
 <header>
-<h2>🎮 GameCollector</h2>
+<h2>🎮 GameCollector Ultimate</h2>
 <input id="search" placeholder="Suchen..." oninput="render()">
 </header>
 
 <div class="add-section">
-<input id="title" placeholder="Titel">
+<input id="title" placeholder="Titel" oninput="autoComplete()" autocomplete="off">
+<div id="autocompleteResults" class="autocomplete-box" style="display:none;"></div>
+
 <select id="system">
 <option value="">System wählen</option>
 <option>NES</option><option>SNES</option><option>N64</option>
@@ -68,83 +169,135 @@ button:hover{background:#4752C4}
 <option>PS1</option><option>PS2</option><option>PS3</option>
 <option>PS4</option><option>PS5</option>
 <option>Xbox</option><option>Xbox 360</option>
-<option>Xbox One</option>
 <option>PC</option>
 </select>
+
 <input type="file" id="coverUpload" accept="image/*">
 <button onclick="addGame()">Hinzufügen</button>
 </div>
 
 <div id="library"></div>
 
-<div class="modal" id="editModal">
-<div class="modal-content">
-<h3>Bearbeiten</h3>
-<input id="editTitle">
-<select id="editSystem">
-<option>NES</option><option>SNES</option><option>N64</option>
-<option>GameCube</option><option>Wii</option><option>Switch</option>
-<option>Game Boy</option><option>Nintendo DS</option>
-<option>PS1</option><option>PS2</option><option>PS3</option>
-<option>PS4</option><option>PS5</option>
-<option>Xbox</option><option>Xbox 360</option>
-<option>Xbox One</option>
-<option>PC</option>
-</select>
-<input type="file" id="editCover">
-<button onclick="saveEdit()">Speichern</button>
-<button onclick="closeModal()">Abbrechen</button>
-</div>
-</div>
-
 <script>
-let games=JSON.parse(localStorage.getItem("games"))||[];
-let editId=null;
 
-function save(){localStorage.setItem("games",JSON.stringify(games));}
+/* Hintergrund Partikel */
+const canvas=document.getElementById("bg");
+const ctx=canvas.getContext("2d");
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+
+let particles=[];
+for(let i=0;i<80;i++){
+particles.push({
+x:Math.random()*canvas.width,
+y:Math.random()*canvas.height,
+r:Math.random()*2,
+dx:(Math.random()-0.5)*0.5,
+dy:(Math.random()-0.5)*0.5
+});
+}
+
+function animate(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+ctx.fillStyle="rgba(88,101,242,0.3)";
+particles.forEach(p=>{
+ctx.beginPath();
+ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+ctx.fill();
+p.x+=p.dx;
+p.y+=p.dy;
+if(p.x<0||p.x>canvas.width)p.dx*=-1;
+if(p.y<0||p.y>canvas.height)p.dy*=-1;
+});
+requestAnimationFrame(animate);
+}
+animate();
+
+/* RAWG API */
+let API_KEY=localStorage.getItem("rawg_api_key")||"";
+
+if(!API_KEY){
+setTimeout(()=>{
+const key=prompt("Bitte RAWG API Key eingeben:");
+if(key){
+localStorage.setItem("rawg_api_key",key);
+API_KEY=key;
+}
+},500);
+}
+
+let games=JSON.parse(localStorage.getItem("games"))||[];
+let selectedCover="";
+let autoTimeout;
+
+function save(){
+localStorage.setItem("games",JSON.stringify(games));
+}
+
+async function autoComplete(){
+if(!API_KEY)return;
+
+clearTimeout(autoTimeout);
+autoTimeout=setTimeout(async()=>{
+let query=title.value;
+if(query.length<2){
+autocompleteResults.style.display="none";
+return;
+}
+
+let res=await fetch(
+`https://api.rawg.io/api/games?key=${API_KEY}&search=${encodeURIComponent(query)}&page_size=5`
+);
+let data=await res.json();
+
+let box=autocompleteResults;
+box.innerHTML="";
+box.style.display="block";
+
+data.results.forEach(game=>{
+let div=document.createElement("div");
+div.className="autocomplete-item";
+div.innerHTML=`
+${game.background_image?`<img src="${game.background_image}">`:''}
+<span>${game.name}</span>
+`;
+div.onclick=()=>{
+title.value=game.name;
+selectedCover=game.background_image||"";
+box.style.display="none";
+};
+box.appendChild(div);
+});
+},300);
+}
 
 function addGame(){
-let t=title.value,s=system.value,f=coverUpload.files[0];
+let t=title.value;
+let s=system.value;
+let f=coverUpload.files[0];
 if(!t||!s)return alert("Titel & System nötig");
+
 if(f){
 let r=new FileReader();
 r.onload=e=>createGame(t,s,e.target.result);
 r.readAsDataURL(f);
-}else createGame(t,s,"");
+}else createGame(t,s,selectedCover);
+
+selectedCover="";
+title.value="";
 }
 
 function createGame(t,s,c){
 games.push({id:Date.now(),title:t,system:s,cover:c});
-save();render();
+save();
+render();
 }
 
 function deleteGame(id){
 games=games.filter(g=>g.id!==id);
-save();render();
+save();
+render();
 }
-
-function openEdit(id){
-let g=games.find(x=>x.id===id);
-editId=id;
-editTitle.value=g.title;
-editSystem.value=g.system;
-editModal.style.display="flex";
-}
-
-function saveEdit(){
-let g=games.find(x=>x.id===editId);
-g.title=editTitle.value;
-g.system=editSystem.value;
-let f=editCover.files[0];
-if(f){
-let r=new FileReader();
-r.onload=e=>{g.cover=e.target.result;save();render();}
-r.readAsDataURL(f);
-}else{save();render();}
-closeModal();
-}
-
-function closeModal(){editModal.style.display="none";}
 
 function render(){
 let lib=document.getElementById("library");
@@ -160,17 +313,19 @@ sec.className="system-section";
 sec.innerHTML=`<div class="system-title">${sys}</div>
 <div class="carousel" id="c-${sys}"></div>`;
 lib.appendChild(sec);
+
 let car=document.getElementById(`c-${sys}`);
 filtered.filter(g=>g.system===sys)
 .sort((a,b)=>a.title.localeCompare(b.title,'de',{sensitivity:'base'}))
 .forEach(g=>{
 car.innerHTML+=`
 <div class="card">
-${g.cover?`<img src="${g.cover}">`:``}
+${g.cover?`<img src="${g.cover}">`:''}
+<div class="card-content">
 <h4>${g.title}</h4>
 <div class="card-buttons">
-<button onclick="openEdit(${g.id})">Bearbeiten</button>
 <button onclick="deleteGame(${g.id})">Löschen</button>
+</div>
 </div>
 </div>`;
 });
@@ -179,17 +334,7 @@ ${g.cover?`<img src="${g.cover}">`:``}
 
 render();
 
-/* Service Worker */
-if('serviceWorker' in navigator){
-navigator.serviceWorker.register(
-URL.createObjectURL(new Blob([`
-self.addEventListener('install',e=>self.skipWaiting());
-self.addEventListener('fetch',e=>{});
-`],{type:'text/javascript'}))
-);
-}
 </script>
 
 </body>
 </html>
-
