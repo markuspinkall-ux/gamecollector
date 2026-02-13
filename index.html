@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GameCollector Space Edition</title>
+<title>GameCollector</title>
 
 <style>
 body{
 margin:0;
-font-family:Segoe UI,Arial;
-background:transparent;
+font-family:Arial, sans-serif;
+background:#000;
 color:white;
 overflow-x:hidden;
 }
 
-/* Background Canvas */
+/* Canvas Background */
 canvas{
 position:fixed;
 top:0;
@@ -25,12 +25,11 @@ z-index:0;
 pointer-events:none;
 }
 
-header,.add-section,#library{
+header,.controls,#library{
 position:relative;
 z-index:2;
 }
 
-/* HEADER */
 header{
 background:rgba(20,20,30,0.9);
 padding:15px;
@@ -49,33 +48,35 @@ background:#2C2F33;
 color:white;
 }
 
-.view-switch button{
-padding:6px 12px;
+button{
+padding:6px 10px;
 border:none;
 border-radius:6px;
 cursor:pointer;
-background:#333;
+background:#ff00aa;
 color:white;
-font-weight:bold;
+}
+
+.view-switch button{
+background:#333;
 }
 
 .view-switch button.active{
 background:#ff00aa;
 }
 
-/* ADD SECTION */
-.add-section{
-padding:15px;
+/* Controls */
+.controls{
 background:rgba(20,20,30,0.9);
+padding:15px;
 display:flex;
 flex-wrap:wrap;
 gap:10px;
 position:relative;
 }
 
-.add-section input,
-.add-section select,
-.add-section button{
+.controls input,
+.controls select{
 padding:8px;
 border:none;
 border-radius:6px;
@@ -83,22 +84,17 @@ background:#2C2F33;
 color:white;
 }
 
-.add-section button{
-background:#ff00aa;
-cursor:pointer;
-}
-
-/* AUTOCOMPLETE */
+/* Autocomplete */
 .autocomplete-box{
+position:absolute;
+top:45px;
+left:0;
+width:250px;
 background:#23272A;
 border-radius:6px;
 max-height:250px;
 overflow-y:auto;
-box-shadow:0 10px 30px rgba(0,0,0,.6);
-width:100%;
-position:absolute;
-top:45px;
-left:0;
+display:none;
 z-index:999;
 }
 
@@ -121,7 +117,17 @@ object-fit:cover;
 border-radius:4px;
 }
 
-/* GRID */
+/* Library */
+.system-section{
+padding:20px;
+}
+
+.system-title{
+font-size:20px;
+margin-bottom:15px;
+color:#00ffff;
+}
+
 .carousel{
 display:flex;
 gap:15px;
@@ -130,13 +136,13 @@ overflow-x:auto;
 
 .card{
 min-width:160px;
+background:#111;
 border-radius:12px;
 overflow:hidden;
-background:#111;
-display:flex;
-flex-direction:column;
 position:relative;
 border:1px solid #ff00aa;
+display:flex;
+flex-direction:column;
 }
 
 .card img{
@@ -150,67 +156,48 @@ padding:8px;
 text-align:center;
 }
 
-/* LIST */
 .list-view .carousel{
 display:block;
 }
 
 .list-view .card{
 flex-direction:row;
-min-width:100%;
 height:100px;
-margin-bottom:10px;
 }
 
 .list-view .card img{
 width:70px;
 height:100%;
-object-fit:cover;
 }
 
 .list-view .card-title{
-flex:1;
 display:flex;
 align-items:center;
-padding-left:15px;
-text-align:left;
+padding-left:10px;
 }
 
-/* ICONS */
 .card-icons{
 position:absolute;
-top:8px;
-right:8px;
+top:6px;
+right:6px;
 display:flex;
-gap:6px;
+gap:5px;
 }
 
 .icon-btn{
-width:28px;
-height:28px;
+width:26px;
+height:26px;
 border-radius:50%;
 border:none;
 cursor:pointer;
-font-size:14px;
+font-size:12px;
 display:flex;
 align-items:center;
 justify-content:center;
-color:white;
 }
 
-.edit-btn{ background:#00ffff; color:black; }
-.delete-btn{ background:#ff0066; }
-
-.system-section{
-padding:20px;
-}
-
-.system-title{
-font-size:20px;
-margin-bottom:15px;
-color:#00ffff;
-text-shadow:0 0 10px #00ffff;
-}
+.edit-btn{background:#00ffff;color:black;}
+.delete-btn{background:#ff0066;color:white;}
 </style>
 </head>
 
@@ -220,7 +207,7 @@ text-shadow:0 0 10px #00ffff;
 
 <header>
 <div>
-<h2>🎮 GameCollector Space Edition</h2>
+<h2>🎮 GameCollector</h2>
 <input id="search" placeholder="Suchen..." oninput="render()">
 </div>
 
@@ -230,21 +217,20 @@ text-shadow:0 0 10px #00ffff;
 </div>
 </header>
 
-<div class="add-section">
-<div style="position:relative;width:250px;">
-<input id="title" placeholder="Titel" oninput="autoComplete()" autocomplete="off">
-<div id="autocompleteResults" class="autocomplete-box" style="display:none;"></div>
+<div class="controls">
+
+<div style="position:relative;">
+<input id="title" placeholder="Titel" autocomplete="off">
+<div id="autocompleteResults" class="autocomplete-box"></div>
 </div>
 
 <select id="system">
 <option value="">System wählen</option>
 <option>NES</option><option>SNES</option><option>N64</option>
 <option>GameCube</option><option>Wii</option><option>Switch</option>
-<option>Game Boy</option><option>Nintendo DS</option>
 <option>PS1</option><option>PS2</option><option>PS3</option>
 <option>PS4</option><option>PS5</option>
-<option>Xbox</option><option>Xbox 360</option>
-<option>PC</option>
+<option>Xbox</option><option>PC</option>
 </select>
 
 <input type="file" id="coverUpload" accept="image/*">
@@ -254,19 +240,16 @@ text-shadow:0 0 10px #00ffff;
 <div id="library"></div>
 
 <script>
-
 const API_KEY="fd6918aa2d024a1fa2331ccbde183ae7";
 
-/* VIEW MODE */
+/* VIEW */
 let currentView=localStorage.getItem("viewMode")||"grid";
-
 function setView(mode){
 currentView=mode;
 localStorage.setItem("viewMode",mode);
 updateViewButtons();
 render();
 }
-
 function updateViewButtons(){
 gridBtn.classList.remove("active");
 listBtn.classList.remove("active");
@@ -275,7 +258,7 @@ if(currentView==="list")listBtn.classList.add("active");
 }
 updateViewButtons();
 
-/* SPACE BACKGROUND */
+/* BACKGROUND */
 const canvas=document.getElementById("bg");
 const ctx=canvas.getContext("2d");
 function resize(){
@@ -285,27 +268,26 @@ canvas.height=window.innerHeight;
 resize();
 window.addEventListener("resize",resize);
 
-function draw(){
+function animate(){
 ctx.clearRect(0,0,canvas.width,canvas.height);
 let gradient=ctx.createLinearGradient(0,0,0,canvas.height);
 gradient.addColorStop(0,"#1a0033");
 gradient.addColorStop(1,"#000");
 ctx.fillStyle=gradient;
 ctx.fillRect(0,0,canvas.width,canvas.height);
-requestAnimationFrame(draw);
+requestAnimationFrame(animate);
 }
-draw();
+animate();
 
 /* GAME LOGIC */
 let games=JSON.parse(localStorage.getItem("games"))||[];
 let selectedCover="";
 
-function save(){
-localStorage.setItem("games",JSON.stringify(games));
-}
+/* AUTOCOMPLETE */
+document.getElementById("title").addEventListener("input",autoComplete);
 
 async function autoComplete(){
-let query=document.getElementById("title").value;
+let query=title.value;
 let box=document.getElementById("autocompleteResults");
 
 if(query.length<2){
@@ -313,6 +295,7 @@ box.style.display="none";
 return;
 }
 
+try{
 let res=await fetch(`https://api.rawg.io/api/games?key=${API_KEY}&search=${encodeURIComponent(query)}&page_size=5`);
 let data=await res.json();
 
@@ -328,7 +311,7 @@ ${game.background_image?`<img src="${game.background_image}">`:''}
 `;
 
 div.onclick=async()=>{
-document.getElementById("title").value=game.name;
+title.value=game.name;
 box.style.display="none";
 
 if(game.background_image){
@@ -348,8 +331,12 @@ selectedCover="";
 
 box.appendChild(div);
 });
+}catch(err){
+box.style.display="none";
+}
 }
 
+/* ADD */
 function addGame(){
 let t=title.value;
 let s=system.value;
@@ -376,12 +363,19 @@ coverUpload.value="";
 selectedCover="";
 }
 
+/* SAVE */
+function save(){
+localStorage.setItem("games",JSON.stringify(games));
+}
+
+/* EDIT */
 function editGame(id){
 let g=games.find(x=>x.id===id);
 let newTitle=prompt("Neuer Titel:",g.title);
 if(newTitle){g.title=newTitle;save();render();}
 }
 
+/* DELETE */
 function deleteGame(id){
 if(confirm("Wirklich löschen?")){
 games=games.filter(g=>g.id!==id);
@@ -390,6 +384,7 @@ render();
 }
 }
 
+/* RENDER */
 function render(){
 let lib=document.getElementById("library");
 lib.innerHTML="";
@@ -397,17 +392,17 @@ lib.className=currentView==="list"?"list-view":"";
 
 let filtered=games.filter(g=>g.title.toLowerCase().includes(search.value.toLowerCase()));
 let systems=[...new Set(filtered.map(g=>g.system))];
-systems.sort((a,b)=>a.localeCompare(b,'de',{sensitivity:'base'}));
 
 systems.forEach(sys=>{
 let sec=document.createElement("div");
 sec.className="system-section";
 sec.innerHTML=`<div class="system-title">${sys}</div><div class="carousel"></div>`;
 lib.appendChild(sec);
+
 let car=sec.querySelector(".carousel");
 
 filtered.filter(g=>g.system===sys)
-.sort((a,b)=>a.title.localeCompare(b.title,'de',{sensitivity:'base'}))
+.sort((a,b)=>a.title.localeCompare(b.title))
 .forEach(g=>{
 car.innerHTML+=`
 <div class="card">
@@ -423,7 +418,6 @@ ${g.cover?`<img src="${g.cover}">`:''}
 }
 
 render();
-
 </script>
 
 </body>
