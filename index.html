@@ -2,6 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GameCollector Ultimate</title>
 
 <style>
@@ -10,10 +11,9 @@ margin:0;
 font-family:Segoe UI,Arial;
 background:#0f1115;
 color:white;
-overflow-x:hidden;
 }
 
-/* Animierter Hintergrund */
+/* Canvas Background */
 canvas{
 position:fixed;
 top:0;
@@ -25,49 +25,47 @@ z-index:-1;
 header{
 background:#23272acc;
 backdrop-filter:blur(10px);
-padding:20px;
+padding:15px;
 display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-input,select,button{
-padding:8px;
-border:none;
-border-radius:6px;
-background:#2C2F33;
-color:white;
-}
-
-button{
-background:#5865F2;
-cursor:pointer;
-transition:.2s;
-}
-
-button:hover{
-background:#4752C4;
-}
-
-.add-section{
-padding:20px;
-background:#23272acc;
-backdrop-filter:blur(10px);
-display:flex;
+flex-direction:column;
 gap:10px;
-flex-wrap:wrap;
+}
+
+header h2{
+margin:0;
+}
+
+header input{
+width:100%;
+}
+
+/* Add Section */
+.add-section{
+padding:15px;
+background:#23272acc;
+display:flex;
+flex-direction:column;
+gap:10px;
 position:relative;
 }
 
+.add-section input,
+.add-section select,
+.add-section button{
+width:100%;
+}
+
+/* Autocomplete FIX */
 .autocomplete-box{
 position:absolute;
 top:60px;
+left:0;
+right:0;
 background:#23272A;
-width:260px;
 border-radius:6px;
-max-height:300px;
+max-height:250px;
 overflow-y:auto;
-z-index:1000;
+z-index:9999;
 box-shadow:0 10px 30px rgba(0,0,0,.6);
 }
 
@@ -90,37 +88,47 @@ object-fit:cover;
 border-radius:4px;
 }
 
+/* System */
 .system-section{
-padding:30px;
+padding:20px;
 }
 
 .system-title{
-font-size:22px;
-margin-bottom:20px;
+font-size:18px;
+margin-bottom:15px;
 }
 
 .carousel{
 display:flex;
-gap:20px;
+gap:15px;
 overflow-x:auto;
 scroll-snap-type:x mandatory;
+padding-bottom:10px;
 }
 
-/* Card + 3D */
+.carousel::-webkit-scrollbar{
+height:6px;
+}
+
+.carousel::-webkit-scrollbar-thumb{
+background:#444;
+border-radius:4px;
+}
+
+/* Card */
 .card{
 position:relative;
-min-width:200px;
+min-width:160px;
 border-radius:12px;
 overflow:hidden;
 background:#23272A;
 scroll-snap-align:start;
 transition:transform .2s ease;
-transform-style:preserve-3d;
 }
 
 .card img{
 width:100%;
-height:280px;
+height:220px;
 object-fit:cover;
 }
 
@@ -128,22 +136,63 @@ object-fit:cover;
 position:absolute;
 bottom:0;
 width:100%;
-padding:12px;
+padding:10px;
 background:linear-gradient(to top,rgba(0,0,0,.8),transparent);
 opacity:0;
-transform:translateY(20px);
 transition:.3s;
 }
 
 .card:hover .card-content{
 opacity:1;
-transform:translateY(0);
 }
 
 .card-buttons{
 display:flex;
-gap:6px;
-margin-top:8px;
+gap:5px;
+margin-top:5px;
+}
+
+.card-buttons button{
+flex:1;
+font-size:12px;
+padding:5px;
+}
+
+/* Desktop Layout */
+@media(min-width:768px){
+
+header{
+flex-direction:row;
+justify-content:space-between;
+align-items:center;
+}
+
+header input{
+width:300px;
+}
+
+.add-section{
+flex-direction:row;
+align-items:center;
+}
+
+.add-section input,
+.add-section select{
+width:auto;
+}
+
+.add-section button{
+width:auto;
+}
+
+.card{
+min-width:200px;
+}
+
+.card img{
+height:280px;
+}
+
 }
 </style>
 </head>
@@ -180,161 +229,25 @@ margin-top:8px;
 
 <script>
 
-/* Hintergrund Partikel */
+/* API KEY FEST EINGEBAUT */
+const API_KEY = "fd6918aa2d024a1fa2331ccbde183ae7";
+
+/* Hintergrund */
 const canvas=document.getElementById("bg");
 const ctx=canvas.getContext("2d");
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 
 let particles=[];
-for(let i=0;i<80;i++){
+for(let i=0;i<60;i++){
 particles.push({
 x:Math.random()*canvas.width,
 y:Math.random()*canvas.height,
 r:Math.random()*2,
-dx:(Math.random()-0.5)*0.5,
-dy:(Math.random()-0.5)*0.5
+dx:(Math.random()-0.5)*0.4,
+dy:(Math.random()-0.5)*0.4
 });
 }
 
 function animate(){
-ctx.clearRect(0,0,canvas.width,canvas.height);
-ctx.fillStyle="rgba(88,101,242,0.3)";
-particles.forEach(p=>{
-ctx.beginPath();
-ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-ctx.fill();
-p.x+=p.dx;
-p.y+=p.dy;
-if(p.x<0||p.x>canvas.width)p.dx*=-1;
-if(p.y<0||p.y>canvas.height)p.dy*=-1;
-});
-requestAnimationFrame(animate);
-}
-animate();
-
-/* RAWG API */
-let API_KEY=localStorage.getItem("rawg_api_key")||"";
-
-if(!API_KEY){
-setTimeout(()=>{
-const key=prompt("Bitte RAWG API Key eingeben:");
-if(key){
-localStorage.setItem("rawg_api_key",key);
-API_KEY=key;
-}
-},500);
-}
-
-let games=JSON.parse(localStorage.getItem("games"))||[];
-let selectedCover="";
-let autoTimeout;
-
-function save(){
-localStorage.setItem("games",JSON.stringify(games));
-}
-
-async function autoComplete(){
-if(!API_KEY)return;
-
-clearTimeout(autoTimeout);
-autoTimeout=setTimeout(async()=>{
-let query=title.value;
-if(query.length<2){
-autocompleteResults.style.display="none";
-return;
-}
-
-let res=await fetch(
-`https://api.rawg.io/api/games?key=${API_KEY}&search=${encodeURIComponent(query)}&page_size=5`
-);
-let data=await res.json();
-
-let box=autocompleteResults;
-box.innerHTML="";
-box.style.display="block";
-
-data.results.forEach(game=>{
-let div=document.createElement("div");
-div.className="autocomplete-item";
-div.innerHTML=`
-${game.background_image?`<img src="${game.background_image}">`:''}
-<span>${game.name}</span>
-`;
-div.onclick=()=>{
-title.value=game.name;
-selectedCover=game.background_image||"";
-box.style.display="none";
-};
-box.appendChild(div);
-});
-},300);
-}
-
-function addGame(){
-let t=title.value;
-let s=system.value;
-let f=coverUpload.files[0];
-if(!t||!s)return alert("Titel & System nötig");
-
-if(f){
-let r=new FileReader();
-r.onload=e=>createGame(t,s,e.target.result);
-r.readAsDataURL(f);
-}else createGame(t,s,selectedCover);
-
-selectedCover="";
-title.value="";
-}
-
-function createGame(t,s,c){
-games.push({id:Date.now(),title:t,system:s,cover:c});
-save();
-render();
-}
-
-function deleteGame(id){
-games=games.filter(g=>g.id!==id);
-save();
-render();
-}
-
-function render(){
-let lib=document.getElementById("library");
-lib.innerHTML="";
-let searchVal=search.value.toLowerCase();
-let filtered=games.filter(g=>g.title.toLowerCase().includes(searchVal));
-let systems=[...new Set(filtered.map(g=>g.system))];
-systems.sort((a,b)=>a.localeCompare(b,'de',{sensitivity:'base'}));
-
-systems.forEach(sys=>{
-let sec=document.createElement("div");
-sec.className="system-section";
-sec.innerHTML=`<div class="system-title">${sys}</div>
-<div class="carousel" id="c-${sys}"></div>`;
-lib.appendChild(sec);
-
-let car=document.getElementById(`c-${sys}`);
-filtered.filter(g=>g.system===sys)
-.sort((a,b)=>a.title.localeCompare(b.title,'de',{sensitivity:'base'}))
-.forEach(g=>{
-car.innerHTML+=`
-<div class="card">
-${g.cover?`<img src="${g.cover}">`:''}
-<div class="card-content">
-<h4>${g.title}</h4>
-<div class="card-buttons">
-<button onclick="deleteGame(${g.id})">Löschen</button>
-</div>
-</div>
-</div>`;
-});
-});
-}
-
-render();
-
-</script>
-
-</body>
-</html>
+ctx.clearRect(0,0,
