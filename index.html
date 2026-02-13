@@ -14,7 +14,6 @@ color:white;
 overflow-x:hidden;
 }
 
-/* Canvas */
 canvas{
 position:fixed;
 top:0;
@@ -30,7 +29,7 @@ position:relative;
 z-index:2;
 }
 
-/* Header */
+/* HEADER */
 header{
 background:rgba(20,20,30,0.9);
 padding:15px;
@@ -49,7 +48,6 @@ background:#2C2F33;
 color:white;
 }
 
-/* View Switch */
 .view-switch button{
 padding:6px 12px;
 border:none;
@@ -64,7 +62,7 @@ font-weight:bold;
 background:#ff00aa;
 }
 
-/* Add Section */
+/* ADD SECTION */
 .add-section{
 padding:15px;
 background:rgba(20,20,30,0.9);
@@ -88,7 +86,7 @@ background:#ff00aa;
 cursor:pointer;
 }
 
-/* GRID VIEW */
+/* GRID */
 .carousel{
 display:flex;
 gap:15px;
@@ -117,7 +115,7 @@ padding:8px;
 text-align:center;
 }
 
-/* LIST VIEW */
+/* LIST */
 .list-view .carousel{
 display:block;
 }
@@ -143,7 +141,7 @@ padding-left:15px;
 text-align:left;
 }
 
-/* Icons */
+/* ICONS */
 .card-icons{
 position:absolute;
 top:8px;
@@ -199,6 +197,7 @@ text-shadow:0 0 10px #00ffff;
 
 <div class="add-section">
 <input id="title" placeholder="Titel" oninput="autoComplete()" autocomplete="off">
+
 <select id="system">
 <option value="">System wählen</option>
 <option>NES</option><option>SNES</option><option>N64</option>
@@ -209,6 +208,7 @@ text-shadow:0 0 10px #00ffff;
 <option>Xbox</option><option>Xbox 360</option>
 <option>PC</option>
 </select>
+
 <input type="file" id="coverUpload" accept="image/*">
 <button onclick="addGame()">Hinzufügen</button>
 </div>
@@ -219,7 +219,7 @@ text-shadow:0 0 10px #00ffff;
 
 const API_KEY="fd6918aa2d024a1fa2331ccbde183ae7";
 
-/* VIEW MODE */
+/* ===== VIEW MODE ===== */
 let currentView=localStorage.getItem("viewMode")||"grid";
 
 function setView(mode){
@@ -237,39 +237,63 @@ if(currentView==="list")listBtn.classList.add("active");
 }
 updateViewButtons();
 
-/* SPACE INVADERS BACKGROUND (gekürzt hier für Übersicht) */
+/* ===== SPACE BACKGROUND ===== */
 const canvas=document.getElementById("bg");
 const ctx=canvas.getContext("2d");
-function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+
+function resize(){
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+}
 resize();
 window.addEventListener("resize",resize);
-let offset=0;
-function draw(){
+
+function drawBackground(){
 ctx.clearRect(0,0,canvas.width,canvas.height);
 let gradient=ctx.createLinearGradient(0,0,0,canvas.height);
 gradient.addColorStop(0,"#1a0033");
 gradient.addColorStop(1,"#000");
 ctx.fillStyle=gradient;
 ctx.fillRect(0,0,canvas.width,canvas.height);
-offset+=0.5;
-requestAnimationFrame(draw);
+requestAnimationFrame(drawBackground);
 }
-draw();
+drawBackground();
 
-/* GAME LOGIC */
+/* ===== GAME LOGIC ===== */
+
 let games=JSON.parse(localStorage.getItem("games"))||[];
 let selectedCover="";
 
-function save(){localStorage.setItem("games",JSON.stringify(games));}
+function save(){
+localStorage.setItem("games",JSON.stringify(games));
+}
 
+/* RAWG Cover → Base64 */
 async function autoComplete(){
 let query=title.value;
 if(query.length<2)return;
 
-let res=await fetch(`https://api.rawg.io/api/games?key=${API_KEY}&search=${encodeURIComponent(query)}&page_size=1`);
+let res=await fetch(
+`https://api.rawg.io/api/games?key=${API_KEY}&search=${encodeURIComponent(query)}&page_size=1`
+);
 let data=await res.json();
+
 if(data.results.length>0){
-selectedCover=data.results[0].background_image||"";
+let imageUrl=data.results[0].background_image;
+
+if(imageUrl){
+try{
+let imgRes=await fetch(imageUrl);
+let blob=await imgRes.blob();
+let reader=new FileReader();
+reader.onloadend=function(){
+selectedCover=reader.result;
+};
+reader.readAsDataURL(blob);
+}catch(e){
+selectedCover="";
+}
+}
 }
 }
 
@@ -277,6 +301,7 @@ function addGame(){
 let t=title.value;
 let s=system.value;
 let file=coverUpload.files[0];
+
 if(!t||!s)return alert("Titel & System nötig");
 
 if(file){
@@ -292,14 +317,20 @@ games.push({id:Date.now(),title:t,system:s,cover:selectedCover});
 save();
 render();
 }
+
 title.value="";
 selectedCover="";
+coverUpload.value="";
 }
 
 function editGame(id){
 let g=games.find(x=>x.id===id);
 let newTitle=prompt("Neuer Titel:",g.title);
-if(newTitle){g.title=newTitle;save();render();}
+if(newTitle){
+g.title=newTitle;
+save();
+render();
+}
 }
 
 function deleteGame(id){
@@ -324,6 +355,7 @@ let sec=document.createElement("div");
 sec.className="system-section";
 sec.innerHTML=`<div class="system-title">${sys}</div><div class="carousel"></div>`;
 lib.appendChild(sec);
+
 let car=sec.querySelector(".carousel");
 
 filtered.filter(g=>g.system===sys)
