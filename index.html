@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GameCollector</title>
+<title>GameCollector Final</title>
 
 <style>
 body{
 margin:0;
 font-family:Arial, sans-serif;
-background:#000;
+background:transparent;
 color:white;
 overflow-x:hidden;
 }
 
-/* Canvas Background */
+/* Background */
 canvas{
 position:fixed;
 top:0;
@@ -30,6 +30,7 @@ position:relative;
 z-index:2;
 }
 
+/* HEADER */
 header{
 background:rgba(20,20,30,0.9);
 padding:15px;
@@ -48,17 +49,14 @@ background:#2C2F33;
 color:white;
 }
 
-button{
+.view-switch button{
 padding:6px 10px;
 border:none;
 border-radius:6px;
 cursor:pointer;
-background:#ff00aa;
-color:white;
-}
-
-.view-switch button{
 background:#333;
+color:white;
+font-weight:bold;
 }
 
 .view-switch button.active{
@@ -81,6 +79,15 @@ padding:8px;
 border:none;
 border-radius:6px;
 background:#2C2F33;
+color:white;
+}
+
+button{
+padding:8px 10px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+background:#ff00aa;
 color:white;
 }
 
@@ -156,6 +163,7 @@ padding:8px;
 text-align:center;
 }
 
+/* List */
 .list-view .carousel{
 display:block;
 }
@@ -176,6 +184,7 @@ align-items:center;
 padding-left:10px;
 }
 
+/* Icons */
 .card-icons{
 position:absolute;
 top:6px;
@@ -240,16 +249,19 @@ justify-content:center;
 <div id="library"></div>
 
 <script>
+
 const API_KEY="fd6918aa2d024a1fa2331ccbde183ae7";
 
-/* VIEW */
+/* VIEW MODE */
 let currentView=localStorage.getItem("viewMode")||"grid";
+
 function setView(mode){
 currentView=mode;
 localStorage.setItem("viewMode",mode);
 updateViewButtons();
 render();
 }
+
 function updateViewButtons(){
 gridBtn.classList.remove("active");
 listBtn.classList.remove("active");
@@ -261,6 +273,7 @@ updateViewButtons();
 /* BACKGROUND */
 const canvas=document.getElementById("bg");
 const ctx=canvas.getContext("2d");
+
 function resize(){
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
@@ -268,18 +281,40 @@ canvas.height=window.innerHeight;
 resize();
 window.addEventListener("resize",resize);
 
+let stars=[];
+for(let i=0;i<120;i++){
+stars.push({
+x:Math.random()*canvas.width,
+y:Math.random()*canvas.height,
+size:Math.random()*2,
+speed:Math.random()*0.5+0.2
+});
+}
+
 function animate(){
 ctx.clearRect(0,0,canvas.width,canvas.height);
+
 let gradient=ctx.createLinearGradient(0,0,0,canvas.height);
 gradient.addColorStop(0,"#1a0033");
 gradient.addColorStop(1,"#000");
 ctx.fillStyle=gradient;
 ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ctx.fillStyle="white";
+stars.forEach(s=>{
+ctx.fillRect(s.x,s.y,s.size,s.size);
+s.y+=s.speed;
+if(s.y>canvas.height){
+s.y=0;
+s.x=Math.random()*canvas.width;
+}
+});
+
 requestAnimationFrame(animate);
 }
 animate();
 
-/* GAME LOGIC */
+/* GAME DATA */
 let games=JSON.parse(localStorage.getItem("games"))||[];
 let selectedCover="";
 
@@ -315,7 +350,6 @@ title.value=game.name;
 box.style.display="none";
 
 if(game.background_image){
-try{
 let imgRes=await fetch(game.background_image);
 let blob=await imgRes.blob();
 let reader=new FileReader();
@@ -323,15 +357,12 @@ reader.onloadend=function(){
 selectedCover=reader.result;
 };
 reader.readAsDataURL(blob);
-}catch(e){
-selectedCover="";
-}
 }
 };
 
 box.appendChild(div);
 });
-}catch(err){
+}catch(e){
 box.style.display="none";
 }
 }
@@ -418,6 +449,7 @@ ${g.cover?`<img src="${g.cover}">`:''}
 }
 
 render();
+
 </script>
 
 </body>
