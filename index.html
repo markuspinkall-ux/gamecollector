@@ -63,7 +63,7 @@ background:#5865F2;
 cursor:pointer;
 }
 
-/* Autocomplete – jetzt im normalen Layout */
+/* Autocomplete */
 .autocomplete-box{
 background:#23272A;
 border-radius:6px;
@@ -115,7 +115,8 @@ border-radius:12px;
 overflow:hidden;
 background:#23272A;
 scroll-snap-align:start;
-position:relative;
+display:flex;
+flex-direction:column;
 }
 
 .card img{
@@ -124,30 +125,24 @@ height:220px;
 object-fit:cover;
 }
 
-.card-content{
-position:absolute;
-bottom:0;
-width:100%;
+/* Titel IMMER sichtbar */
+.card-title{
 padding:10px;
-background:linear-gradient(to top,rgba(0,0,0,.8),transparent);
-opacity:0;
-transition:.3s;
+font-weight:bold;
+font-size:14px;
 }
 
-.card:hover .card-content{
-opacity:1;
-}
-
+/* Buttons IMMER sichtbar */
 .card-buttons{
 display:flex;
 gap:5px;
-margin-top:5px;
+padding:0 10px 10px 10px;
 }
 
 .card-buttons button{
 flex:1;
 font-size:12px;
-padding:5px;
+padding:6px;
 background:#5865F2;
 border:none;
 border-radius:4px;
@@ -265,6 +260,7 @@ animate();
 let games=JSON.parse(localStorage.getItem("games"))||[];
 let selectedCover="";
 let autoTimeout;
+let editId=null;
 
 function save(){
 localStorage.setItem("games",JSON.stringify(games));
@@ -328,6 +324,16 @@ save();
 render();
 }
 
+function editGame(id){
+let g=games.find(x=>x.id===id);
+let newTitle=prompt("Neuer Titel:",g.title);
+if(newTitle){
+g.title=newTitle;
+save();
+render();
+}
+}
+
 function deleteGame(id){
 games=games.filter(g=>g.id!==id);
 save();
@@ -357,11 +363,10 @@ filtered.filter(g=>g.system===sys)
 car.innerHTML+=`
 <div class="card">
 ${g.cover?`<img src="${g.cover}">`:''}
-<div class="card-content">
-<h4>${g.title}</h4>
+<div class="card-title">${g.title}</div>
 <div class="card-buttons">
+<button onclick="editGame(${g.id})">Bearbeiten</button>
 <button onclick="deleteGame(${g.id})">Löschen</button>
-</div>
 </div>
 </div>`;
 });
