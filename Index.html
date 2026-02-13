@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GameCollector</title>
+
+<style>
+body{
+margin:0;
+font-family:Segoe UI,Arial;
+background:#1e1f22;
+color:white;
+}
+
+/* HEADER */
+header{
+background:#2b2d31;
+padding:15px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+flex-wrap:wrap;
+gap:10px;
+}
+
+header input{
+padding:8px;
+border:none;
+border-radius:6px;
+background:#1e1f22;
+color:white;
+}
+
+/* VIEW SWITCH */
+.view-switch button{
+padding:6px 10px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+background:#444;
+color:white;
+font-weight:bold;
+}
+
+.view-switch button.active{
+background:#5865f2;
+}
+
+/* CONTROLS */
+.controls{
+background:#2b2d31;
+padding:15px;
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+position:relative;
+}
+
+.controls input,
+.controls select{
+padding:8px;
+border:none;
+border-radius:6px;
+background:#1e1f22;
+color:white;
+}
+
+button{
+padding:8px 10px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+background:#5865f2;
+color:white;
+}
+
+/* AUTOCOMPLETE */
+.autocomplete-box{
+position:absolute;
+top:45px;
+left:0;
+width:250px;
+background:#1e1f22;
+border-radius:6px;
+max-height:250px;
+overflow-y:auto;
+display:none;
+z-index:999;
+border:1px solid #444;
+}
+
+.autocomplete-item{
+display:flex;
+gap:8px;
+padding:8px;
+cursor:pointer;
+align-items:center;
+}
+
+.autocomplete-item:hover{
+background:#2b2d31;
+}
+
+.autocomplete-item img{
+width:40px;
+height:55px;
+object-fit:cover;
+border-radius:4px;
+}
+
+/* LIBRARY */
+.system-section{
+padding:20px;
+}
+
+.system-title{
+font-size:20px;
+margin-bottom:15px;
+color:#5865f2;
+}
+
+/* GRID */
+.carousel{
+display:flex;
+gap:15px;
+overflow-x:auto;
+}
+
+.card{
+min-width:160px;
+background:#2b2d31;
+border-radius:12px;
+overflow:hidden;
+position:relative;
+display:flex;
+flex-direction:column;
+}
+
+.card img{
+width:100%;
+height:220px;
+object-fit:cover;
+}
+
+.card-title{
+padding:8px;
+text-align:center;
+}
+
+/* LIST */
+.list-view .carousel{
+display:block;
+}
+
+.list-view .card{
+flex-direction:row;
+height:100px;
+margin-bottom:10px;
+}
+
+.list-view .card img{
+width:70px;
+height:100%;
+}
+
+.list-view .card-title{
+display:flex;
+align-items:center;
+padding-left:10px;
+}
+
+/* ICONS */
+.card-icons{
+position:absolute;
+top:6px;
+right:6px;
+display:flex;
+gap:5px;
+}
+
+.icon-btn{
+width:26px;
+height:26px;
+border-radius:50%;
+border:none;
+cursor:pointer;
+font-size:12px;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.edit-btn{background:#57f287;color:black;}
+.delete-btn{background:#ed4245;color:white;}
+</style>
+</head>
+
+<body>
+
+<header>
+<div>
+<h2>🎮 GameCollector</h2>
+<input id="search" placeholder="Suchen..." oninput="render()">
+</div>
+
+<div class="view-switch">
+<button id="gridBtn" onclick="setView('grid')">Grid</button>
+<button id="listBtn" onclick="setView('list')">Liste</button>
+</div>
+</header>
+
+<div class="controls">
+
+<div style="position:relative;">
+<input id="title" placeholder="Titel" autocomplete="off">
+<div id="autocompleteResults" class="autocomplete-box"></div>
+</div>
+
+<select id="system">
+<option value="">System wählen</option>
+<option>NES</option><option>SNES</option><option>N64</option>
+<option>GameCube</option><option>Wii</option><option>Switch</option>
+<option>PS1</option><option>PS2</option><option>PS3</option>
+<option>PS4</option><option>PS5</option>
+<option>Xbox</option><option>PC</option>
+</select>
+
+<input type="file" id="coverUpload" accept="image/*">
+<button onclick="addGame()">Hinzufügen</button>
+</div>
+
+<div id="library"></div>
+
+<script>
+const API_KEY="fd6918aa2d024a1fa2331ccbde183ae7";
+
+let games=JSON.parse(localStorage.getItem("games"))||[];
+let selectedCover="";
+let currentView=localStorage.getItem("viewMode")||"grid";
+
+/* VIEW */
+function setView(mode){
+currentView=mode;
+localStorage.setItem("viewMode",mode);
+updateViewButtons();
+render();
+}
+
+function updateViewButtons(){
+gridBtn.classList.remove("active");
+listBtn.classList.remove("active");
+if(currentView==="grid")gridBtn.classList.add("active");
+if(currentView==="list")listBtn.classList.add("active");
+}
+updateViewButtons();
+
+/* AUTOCOMPLETE */
+title.addEventListener("input",autoComplete);
+
+async function autoComplete(){
+let query=title.value;
+let box=document.getElementById("autocompleteResults");
+
+if(query.length<2){
+box.style.display="none";
+return;
+}
+
+try{
+let res=await fetch(`https://api.rawg.io/api/games?key=${API_KEY}&search=${encodeURIComponent(query)}&page_size=5`);
+let data=await res.json();
+
+box.innerHTML="";
+box.style.display="block";
+
+data.results.forEach(game=>{
+let div=document.createElement("div");
+div.className="autocomplete-item";
+
+div.innerHTML=`
+${game.background_image?`<img src="${game.background_image}">`:''}
+<span>${game.name}</span>
+`;
+
+div.onclick=async()=>{
+title.value=game.name;
+box.style.display="none";
+
+if(game.background_image){
+let imgRes=await fetch(game.background_image);
+let blob=await imgRes.blob();
+let reader=new FileReader();
+reader.onloadend=function(){
+selectedCover=reader.result;
+};
+reader.readAsDataURL(blob);
+}
+};
+
+box.appendChild(div);
+});
+}catch(e){
+box.style.display="none";
+}
+}
+
+/* ADD */
+function addGame(){
+let t=title.value;
+let s=system.value;
+let file=coverUpload.files[0];
+
+if(!t||!s){
+alert("Titel & System nötig");
+return;
+}
+
+if(file){
+let reader=new FileReader();
+reader.onload=e=>{
+games.push({id:Date.now(),title:t,system:s,cover:e.target.result});
+save();
+render();
+};
+reader.readAsDataURL(file);
+}else{
+games.push({id:Date.now(),title:t,system:s,cover:selectedCover});
+save();
+render();
+}
+
+title.value="";
+coverUpload.value="";
+selectedCover="";
+}
+
+/* SAVE */
+function save(){
+localStorage.setItem("games",JSON.stringify(games));
+}
+
+/* EDIT */
+function editGame(id){
+let g=games.find(x=>x.id===id);
+let newTitle=prompt("Neuer Titel:",g.title);
+if(newTitle){g.title=newTitle;save();render();}
+}
+
+/* DELETE */
+function deleteGame(id){
+if(confirm("Wirklich löschen?")){
+games=games.filter(g=>g.id!==id);
+save();
+render();
+}
+}
+
+/* RENDER */
+function render(){
+let lib=document.getElementById("library");
+lib.innerHTML="";
+lib.className=currentView==="list"?"list-view":"";
+
+let filtered=games.filter(g=>g.title.toLowerCase().includes(search.value.toLowerCase()));
+let systems=[...new Set(filtered.map(g=>g.system))];
+
+systems.forEach(sys=>{
+let sec=document.createElement("div");
+sec.className="system-section";
+sec.innerHTML=`<div class="system-title">${sys}</div><div class="carousel"></div>`;
+lib.appendChild(sec);
+
+let car=sec.querySelector(".carousel");
+
+filtered.filter(g=>g.system===sys)
+.sort((a,b)=>a.title.localeCompare(b.title))
+.forEach(g=>{
+car.innerHTML+=`
+<div class="card">
+${g.cover?`<img src="${g.cover}">`:''}
+<div class="card-icons">
+<button class="icon-btn edit-btn" onclick="editGame(${g.id})">✏</button>
+<button class="icon-btn delete-btn" onclick="deleteGame(${g.id})">🗑</button>
+</div>
+<div class="card-title">${g.title}</div>
+</div>`;
+});
+});
+}
+
+render();
+</script>
+
+</body>
+</html>
