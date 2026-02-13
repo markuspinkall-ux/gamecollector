@@ -16,7 +16,6 @@ color:white;
 overflow-x:hidden;
 min-height:100vh;
 
-/* Fullscreen Retro Gradient */
 background: linear-gradient(to top,
 #000 0%,
 #2a004d 40%,
@@ -268,6 +267,14 @@ justify-content:center;
 const API_KEY="fd6918aa2d024a1fa2331ccbde183ae7";
 
 let games=JSON.parse(localStorage.getItem("games"))||[];
+
+/* Alte URL-Cover entfernen (nur Base64 erlauben) */
+games.forEach(g=>{
+if(g.cover && g.cover.startsWith("http")){
+g.cover="";
+}
+});
+
 let selectedCoverUrl="";
 let currentView=localStorage.getItem("viewMode")||"grid";
 
@@ -307,133 +314,4 @@ box.innerHTML="";
 box.style.display="block";
 
 data.results.forEach(game=>{
-let div=document.createElement("div");
-div.className="autocomplete-item";
-
-div.innerHTML=`
-${game.background_image?`<img src="${game.background_image}">`:''}
-<span>${game.name}</span>
-`;
-
-div.onclick=()=>{
-title.value=game.name;
-box.style.display="none";
-selectedCoverUrl=game.background_image||"";
-};
-
-box.appendChild(div);
-});
-}catch(e){
-box.style.display="none";
-}
-}
-
-/* ADD */
-async function addGame(){
-
-let t=title.value;
-let s=system.value;
-let file=coverUpload.files[0];
-
-if(!t||!s){
-alert("Titel & System nötig");
-return;
-}
-
-if(file){
-let reader=new FileReader();
-reader.onload=e=>{
-games.push({id:Date.now(),title:t,system:s,cover:e.target.result});
-save();
-render();
-};
-reader.readAsDataURL(file);
-}else if(selectedCoverUrl){
-try{
-let imgRes=await fetch(selectedCoverUrl);
-let blob=await imgRes.blob();
-let reader=new FileReader();
-
-reader.onloadend=function(){
-games.push({id:Date.now(),title:t,system:s,cover:reader.result});
-save();
-render();
-};
-
-reader.readAsDataURL(blob);
-}catch(e){
-games.push({id:Date.now(),title:t,system:s,cover:""});
-save();
-render();
-}
-}else{
-games.push({id:Date.now(),title:t,system:s,cover:""});
-save();
-render();
-}
-
-title.value="";
-coverUpload.value="";
-selectedCoverUrl="";
-}
-
-/* SAVE */
-function save(){
-localStorage.setItem("games",JSON.stringify(games));
-}
-
-/* EDIT */
-function editGame(id){
-let g=games.find(x=>x.id===id);
-let newTitle=prompt("Neuer Titel:",g.title);
-if(newTitle){g.title=newTitle;save();render();}
-}
-
-/* DELETE */
-function deleteGame(id){
-if(confirm("Wirklich löschen?")){
-games=games.filter(g=>g.id!==id);
-save();
-render();
-}
-}
-
-/* RENDER */
-function render(){
-let lib=document.getElementById("library");
-lib.innerHTML="";
-lib.className=currentView==="list"?"list-view":"";
-
-let filtered=games.filter(g=>g.title.toLowerCase().includes(search.value.toLowerCase()));
-let systems=[...new Set(filtered.map(g=>g.system))];
-
-systems.forEach(sys=>{
-let sec=document.createElement("div");
-sec.className="system-section";
-sec.innerHTML=`<div class="system-title">${sys}</div><div class="carousel"></div>`;
-lib.appendChild(sec);
-
-let car=sec.querySelector(".carousel");
-
-filtered.filter(g=>g.system===sys)
-.sort((a,b)=>a.title.localeCompare(b.title))
-.forEach(g=>{
-car.innerHTML+=`
-<div class="card">
-${g.cover?`<img src="${g.cover}">`:''}
-<div class="card-icons">
-<button class="icon-btn edit-btn" onclick="editGame(${g.id})">✏</button>
-<button class="icon-btn delete-btn" onclick="deleteGame(${g.id})">🗑</button>
-</div>
-<div class="card-title">${g.title}</div>
-</div>`;
-});
-});
-}
-
-render();
-
-</script>
-
-</body>
-</html>
+let div=d
