@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GameCollector Retro Edition</title>
+<title>GameCollector Retro</title>
 
 <style>
 body{
 margin:0;
 font-family:Segoe UI,Arial;
-color:white;
 background:transparent;
+color:white;
 overflow-x:hidden;
 }
 
-/* Canvas */
+/* Retro Canvas */
 canvas{
 position:fixed;
 top:0;
@@ -25,6 +25,7 @@ z-index:0;
 pointer-events:none;
 }
 
+/* Content Layer */
 header, .add-section, #library{
 position:relative;
 z-index:2;
@@ -32,10 +33,12 @@ z-index:2;
 
 /* Header */
 header{
-background:rgba(20,20,30,0.85);
+background:rgba(20,20,30,0.9);
 padding:15px;
 display:flex;
-flex-direction:column;
+justify-content:space-between;
+align-items:center;
+flex-wrap:wrap;
 gap:10px;
 }
 
@@ -54,12 +57,13 @@ gap:10px;
 }
 
 .view-switch button{
-padding:6px 10px;
+padding:6px 12px;
 border:none;
 border-radius:6px;
 cursor:pointer;
-background:#444;
+background:#333;
 color:white;
+font-weight:bold;
 }
 
 .view-switch button.active{
@@ -69,9 +73,9 @@ background:#ff00aa;
 /* Add Section */
 .add-section{
 padding:15px;
-background:rgba(20,20,30,0.85);
+background:rgba(20,20,30,0.9);
 display:flex;
-flex-direction:column;
+flex-wrap:wrap;
 gap:10px;
 }
 
@@ -97,6 +101,7 @@ border-radius:6px;
 max-height:250px;
 overflow-y:auto;
 box-shadow:0 10px 30px rgba(0,0,0,.6);
+width:100%;
 }
 
 .autocomplete-item{
@@ -114,7 +119,7 @@ object-fit:cover;
 border-radius:4px;
 }
 
-/* System */
+/* System Section */
 .system-section{
 padding:20px;
 }
@@ -166,6 +171,7 @@ display:block;
 flex-direction:row;
 min-width:100%;
 height:100px;
+margin-bottom:10px;
 }
 
 .list-view .card img{
@@ -206,15 +212,11 @@ color:white;
 .edit-btn{ background:#00ffff; color:black; }
 .delete-btn{ background:#ff0066; }
 
-/* Desktop */
+/* Desktop Tweaks */
 @media(min-width:768px){
-header{
-flex-direction:row;
-justify-content:space-between;
-align-items:center;
-}
 header input{ width:300px; }
-.add-section{ flex-direction:row; }
+.card{ min-width:200px; }
+.card img{ height:280px; }
 }
 </style>
 </head>
@@ -261,7 +263,6 @@ header input{ width:300px; }
 const API_KEY = "fd6918aa2d024a1fa2331ccbde183ae7";
 
 /* ===== VIEW MODE ===== */
-
 let currentView = localStorage.getItem("viewMode") || "grid";
 
 function setView(mode){
@@ -272,16 +273,15 @@ render();
 }
 
 function updateViewButtons(){
-gridBtn.classList.remove("active");
-listBtn.classList.remove("active");
-if(currentView==="grid") gridBtn.classList.add("active");
-if(currentView==="list") listBtn.classList.add("active");
+document.getElementById("gridBtn").classList.remove("active");
+document.getElementById("listBtn").classList.remove("active");
+if(currentView==="grid") document.getElementById("gridBtn").classList.add("active");
+if(currentView==="list") document.getElementById("listBtn").classList.add("active");
 }
 
 updateViewButtons();
 
-/* ===== RETRO WALLPAPER ===== */
-
+/* ===== RETRO BACKGROUND ===== */
 const canvas = document.getElementById("bg");
 const ctx = canvas.getContext("2d");
 
@@ -329,8 +329,7 @@ requestAnimationFrame(drawRetro);
 }
 drawRetro();
 
-/* ===== GAME LOGIK ===== */
-
+/* ===== GAME LOGIC ===== */
 let games=JSON.parse(localStorage.getItem("games"))||[];
 let selectedCover="";
 let autoTimeout;
@@ -342,7 +341,7 @@ localStorage.setItem("games",JSON.stringify(games));
 async function autoComplete(){
 clearTimeout(autoTimeout);
 autoTimeout=setTimeout(async()=>{
-let query=title.value;
+let query=document.getElementById("title").value;
 if(query.length<2){
 autocompleteResults.style.display="none";
 return;
@@ -420,8 +419,7 @@ systems.sort((a,b)=>a.localeCompare(b,'de',{sensitivity:'base'}));
 systems.forEach(sys=>{
 let sec=document.createElement("div");
 sec.className="system-section";
-sec.innerHTML=`<div class="system-title">${sys}</div>
-<div class="carousel"></div>`;
+sec.innerHTML=`<div class="system-title">${sys}</div><div class="carousel"></div>`;
 lib.appendChild(sec);
 
 let car=sec.querySelector(".carousel");
